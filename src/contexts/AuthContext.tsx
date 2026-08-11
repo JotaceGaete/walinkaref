@@ -18,10 +18,6 @@ interface AuthContextValue {
     name: string
   ) => Promise<{ error: AuthError; needsEmailConfirmation: boolean }>;
   signOut: () => Promise<void>;
-  // Definida y lista para usarse, pero deliberadamente NO conectada a la UI
-  // todavía: requiere que ref.walinka.com/auth/callback esté agregado a la
-  // lista de Redirect URLs del proyecto Supabase (cambio remoto pendiente,
-  // fuera de alcance de esta fase).
   signInWithGoogle: () => Promise<{ error: AuthError }>;
 }
 
@@ -92,12 +88,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signInWithGoogle: AuthContextValue['signInWithGoogle'] = async () => {
-    const redirectTo = getAuthRedirectUrl();
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: { redirectTo },
-    });
-    return { error: error ? { message: error.message } : null };
+    try {
+      const redirectTo = getAuthRedirectUrl();
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: { redirectTo },
+      });
+      if (error) return { error: { message: error.message } };
+      if (data?.url) {
+        window.location.href = data.url;
+        return { error: null };
+      }
+      return { error: { message: 'No se pudo iniciar sesión con Google' } };
+    } catch (err) {
+      return {
+        error: { message: err instanceof Error ? err.message : 'Error al conectar con Google' },
+      };
+    }
   };
 
   const value: AuthContextValue = {
