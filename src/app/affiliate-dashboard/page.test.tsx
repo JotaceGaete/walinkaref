@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import AffiliateDashboardPage from './page';
 
 vi.mock('next/navigation', () => ({
@@ -60,7 +60,43 @@ describe('AffiliateDashboardPage (integración)', () => {
     await waitFor(() => expect(getMyReferralStatsMock).toHaveBeenCalledTimes(1));
     expect(listMyReferralsMock).toHaveBeenCalledWith({ limit: 20, offset: 0 });
 
-    expect(await screen.findByText('34')).toBeInTheDocument(); // invitedCount
-    expect(await screen.findByText('Usuario #91AE')).toBeInTheDocument(); // de la lista
+    // "34" aparece dos veces a propósito ahora (KPI + badge del sidebar);
+    // se acota al contenido principal para no ambigüar con el badge.
+    const main = screen.getByRole('main');
+    expect(await within(main).findByText('34')).toBeInTheDocument(); // invitedCount
+    expect(await within(main).findByText('Usuario #91AE')).toBeInTheDocument(); // de la lista
+  });
+
+  it('el badge "Referidos" del sidebar muestra invitedCount real (34), nunca el "14" fijo de Rocket', async () => {
+    render(<AffiliateDashboardPage />);
+
+    await waitFor(() => expect(getMyReferralStatsMock).toHaveBeenCalledTimes(1));
+
+    const sidebar = screen.getByRole('navigation');
+    expect(await within(sidebar).findByText('34')).toBeInTheDocument();
+    expect(within(sidebar).queryByText('14')).not.toBeInTheDocument();
+  });
+
+  it('con invitedCount=0 real, el badge muestra "0" en vez de ocultarse o mostrar "14"', async () => {
+    getMyReferralStatsMock.mockResolvedValue({
+      code: 'nueva-afiliada',
+      rewardAmount: 5,
+      rewardCurrency: 'USD',
+      requiredPaidMonths: 2,
+      invitedCount: 0,
+      oneMonthCount: 0,
+      qualifiedCount: 0,
+      pendingAmount: 0,
+      availableAmount: 0,
+      totalEarnedAmount: 0,
+    });
+    listMyReferralsMock.mockResolvedValue([]);
+
+    render(<AffiliateDashboardPage />);
+
+    const sidebar = screen.getByRole('navigation');
+    const referidosLink = await within(sidebar).findByText('Referidos');
+    await waitFor(() => expect(referidosLink.closest('a')).toHaveTextContent('0'));
+    expect(within(sidebar).queryByText('14')).not.toBeInTheDocument();
   });
 });

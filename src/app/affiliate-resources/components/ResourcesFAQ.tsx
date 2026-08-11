@@ -16,7 +16,7 @@ const faqs = [
   {
     id: 'faq-3',
     q: '¿Cómo retiro mis ganancias?',
-    a: 'Cuando tengas saldo disponible en tu cuenta, puedes solicitar un retiro desde el panel. Los pagos se procesan en los primeros 5 días hábiles del mes siguiente a la solicitud.',
+    a: 'El monto que ves como "Disponible" en tu panel ya está confirmado y es tuyo. La solicitud de retiro todavía está en construcción — en cuanto esté lista para que la uses, te avisaremos.',
   },
   {
     id: 'faq-4',
@@ -36,7 +36,7 @@ const faqs = [
   {
     id: 'faq-7',
     q: '¿Puedo ver quién se registró con mi enlace?',
-    a: 'Sí, pero por privacidad los referidos se muestran con IDs anonimizados (ej. usr-91AE). Puedes ver su progreso de meses pagos, estado y fecha de registro, pero no sus datos personales.',
+    a: 'Sí, pero por privacidad los referidos se muestran con IDs anonimizados (ej. Usuario #91AE). Puedes ver su progreso de meses pagos, estado y fecha de registro, pero no sus datos personales.',
   },
   {
     id: 'faq-8',

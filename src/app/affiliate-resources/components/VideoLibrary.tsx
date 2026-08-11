@@ -1,7 +1,7 @@
 import React from 'react';
 import { Play, Clock } from 'lucide-react';
 
-const videos = [
+export const videos = [
   { id: 'vid-intro', title: 'Mira Walinka en 2 minutos', duration: '2:14', category: 'Introducción', color: 'from-primary to-blue-600' },
   { id: 'vid-catalog', title: 'Cómo crear un catálogo digital', duration: '4:32', category: 'Tutorial', color: 'from-accent to-emerald-600' },
   { id: 'vid-orders', title: 'Cómo recibe un pedido un negocio', duration: '3:18', category: 'Tutorial', color: 'from-indigo-500 to-purple-600' },

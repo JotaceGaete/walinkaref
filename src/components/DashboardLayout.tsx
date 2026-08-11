@@ -9,17 +9,26 @@ import { useAuth } from '@/contexts/AuthContext';
 
 
 const sidebarLinks = [
-  { label: 'Dashboard', href: '/affiliate-dashboard', icon: LayoutDashboard, badge: null },
-  { label: 'Referidos', href: '/affiliate-dashboard', icon: Users, badge: '14' },
-  { label: 'Mi enlace', href: '/affiliate-dashboard', icon: Link2, badge: null },
-  { label: 'Recursos', href: '/affiliate-resources', icon: BookOpen, badge: null },
-];
+  { label: 'Dashboard', href: '/affiliate-dashboard', icon: LayoutDashboard, badgeKey: null },
+  { label: 'Referidos', href: '/affiliate-dashboard', icon: Users, badgeKey: 'referrals' },
+  { label: 'Mi enlace', href: '/affiliate-dashboard', icon: Link2, badgeKey: null },
+  { label: 'Recursos', href: '/affiliate-resources', icon: BookOpen, badgeKey: null },
+] as const;
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
+  /**
+   * invitedCount real de wa_get_my_referral_stats(), si la página que
+   * envuelve ya lo tiene cargado (hoy solo /affiliate-dashboard). Sin esto
+   * (undefined/null, p.ej. en /affiliate-resources o mientras stats está
+   * cargando) el badge de "Referidos" no se muestra — nunca se rellena con
+   * un valor inventado. Pasar por prop evita que este layout compartido
+   * dispare su propia llamada RPC.
+   */
+  referralsCount?: number | null;
 }
 
-export default function DashboardLayout({ children }: DashboardLayoutProps) {
+export default function DashboardLayout({ children, referralsCount }: DashboardLayoutProps) {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const pathname = usePathname();
@@ -91,6 +100,8 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           {sidebarLinks.map((link) => {
             const isActive = pathname === link.href;
             const Icon = link.icon;
+            const badge = link.badgeKey === 'referrals' ? referralsCount : null;
+            const hasBadge = badge !== null && badge !== undefined;
             return (
               <Link
                 key={`sidebar-${link.label}`}
@@ -102,12 +113,12 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
               >
                 <Icon size={18} className="shrink-0" />
                 {!collapsed && <span>{link.label}</span>}
-                {!collapsed && link.badge && (
+                {!collapsed && hasBadge && (
                   <span className="ml-auto bg-primary text-primary-foreground text-xs font-bold px-2 py-0.5 rounded-full">
-                    {link.badge}
+                    {badge}
                   </span>
                 )}
-                {collapsed && link.badge && (
+                {collapsed && hasBadge && (
                   <span className="absolute top-1 right-1 w-2 h-2 bg-primary rounded-full" />
                 )}
                 {collapsed && (
@@ -166,9 +177,11 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           </button>
           <div className="flex-1" />
           <div className="flex items-center gap-3">
+            {/* Sin punto de notificación: no existe ningún sistema de
+                notificaciones real detrás todavía — mostrar un indicador
+                fijo implicaría que siempre hay algo nuevo, lo cual sería falso. */}
             <button className="relative p-2 rounded-lg hover:bg-muted transition-colors">
               <Bell size={18} className="text-muted-foreground" />
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-accent rounded-full" />
             </button>
             <div className="flex items-center gap-2.5 pl-3 border-l border-border">
               <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground text-sm font-bold">

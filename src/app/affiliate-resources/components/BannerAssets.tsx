@@ -2,7 +2,7 @@
 import React from 'react';
 import { Download, ImageIcon } from 'lucide-react';
 
-const banners = [
+export const banners = [
   { id: 'banner-sq-1', label: 'Banner cuadrado', size: '1080×1080', format: 'PNG', use: 'Instagram · WhatsApp', color: 'from-primary to-blue-600' },
   { id: 'banner-story-1', label: 'Story vertical', size: '1080×1920', format: 'PNG', use: 'Instagram Stories', color: 'from-accent to-emerald-600' },
   { id: 'banner-web-1', label: 'Banner web ancho', size: '1200×628', format: 'PNG', use: 'Facebook · LinkedIn', color: 'from-primary to-accent' },

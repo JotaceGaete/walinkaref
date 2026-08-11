@@ -52,7 +52,7 @@ export default function AffiliateDashboardPage() {
   }, [loadStats, loadReferrals]);
 
   return (
-    <DashboardLayout>
+    <DashboardLayout referralsCount={stats?.invitedCount}>
       <div className="p-6 lg:p-8 max-w-screen-2xl mx-auto">
         {/* Page header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
