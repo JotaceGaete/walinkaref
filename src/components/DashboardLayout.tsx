@@ -1,10 +1,11 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import AppLogo from '@/components/ui/AppLogo';
 import { LayoutDashboard, Users, Link2, BookOpen, ChevronLeft, ChevronRight, LogOut, Bell, Settings, Menu,  } from 'lucide-react';
 import Icon from '@/components/ui/AppIcon';
+import { useAuth } from '@/contexts/AuthContext';
 
 
 const sidebarLinks = [
@@ -22,6 +23,33 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const pathname = usePathname();
+  const router = useRouter();
+  const { user, loading, signOut } = useAuth();
+
+  useEffect(() => {
+    if (!loading && !user) {
+      router.replace('/sign-up-login-screen');
+    }
+  }, [loading, user, router]);
+
+  const handleLogout = async () => {
+    await signOut();
+    router.replace('/sign-up-login-screen');
+  };
+
+  // Sesión aún resolviéndose, o ya resuelta pero sin usuario (a punto de
+  // redirigir vía el efecto de arriba): no renderizar el panel.
+  if (loading || !user) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-background">
+        <div className="w-8 h-8 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  const displayName =
+    user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0] || 'Afiliado';
+  const initial = displayName.charAt(0).toUpperCase();
 
   return (
     <div className="flex h-screen bg-background overflow-hidden">
@@ -101,14 +129,15 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
             <Settings size={18} className="shrink-0" />
             {!collapsed && <span>Configuración</span>}
           </button>
-          <Link
-            href="/sign-up-login-screen"
+          <button
+            type="button"
+            onClick={handleLogout}
             className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-danger hover:bg-danger/10 transition-all w-full ${collapsed ? 'justify-center' : ''}`}
             title={collapsed ? 'Cerrar sesión' : undefined}
           >
             <LogOut size={18} className="shrink-0" />
             {!collapsed && <span>Cerrar sesión</span>}
-          </Link>
+          </button>
         </div>
 
         {/* Collapse toggle */}
@@ -143,10 +172,10 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
             </button>
             <div className="flex items-center gap-2.5 pl-3 border-l border-border">
               <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground text-sm font-bold">
-                J
+                {initial}
               </div>
               <div className="hidden sm:block">
-                <p className="text-sm font-600 text-foreground leading-tight">Juan Flores</p>
+                <p className="text-sm font-600 text-foreground leading-tight">{displayName}</p>
                 <p className="text-xs text-muted-foreground leading-tight">Afiliado activo</p>
               </div>
             </div>

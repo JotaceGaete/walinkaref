@@ -1,9 +1,11 @@
 'use client';
 import React, { useState } from 'react';
 
+import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
-import { Eye, EyeOff, ArrowRight, CheckCircle, Copy, Check, AlertCircle } from 'lucide-react';
+import { Eye, EyeOff, ArrowRight, AlertCircle, CheckCircle2 } from 'lucide-react';
 import AppLogo from '@/components/ui/AppLogo';
+import { useAuth } from '@/contexts/AuthContext';
 
 type LoginFormData = {
   email: string;
@@ -19,18 +21,15 @@ type RegisterFormData = {
   terms: boolean;
 };
 
-const demoCredentials = {
-  email: 'afiliado@walinka.app',
-  password: 'WalinkaRef2026',
-};
-
 export default function AuthScreen() {
+  const router = useRouter();
+  const { signIn, signUp } = useAuth();
   const [mode, setMode] = useState<'login' | 'register'>('login');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [copiedField, setCopiedField] = useState<string | null>(null);
   const [authError, setAuthError] = useState<string | null>(null);
+  const [infoMessage, setInfoMessage] = useState<string | null>(null);
 
   const loginForm = useForm<LoginFormData>({
     defaultValues: { email: '', password: '', remember: false },
@@ -40,42 +39,39 @@ export default function AuthScreen() {
     defaultValues: { name: '', email: '', password: '', confirmPassword: '', terms: false },
   });
 
-  const handleCopy = (field: string, value: string) => {
-    navigator.clipboard.writeText(value);
-    setCopiedField(field);
-    setTimeout(() => setCopiedField(null), 2000);
-  };
-
-  const handleAutofill = () => {
-    loginForm.setValue('email', demoCredentials.email);
-    loginForm.setValue('password', demoCredentials.password);
+  const switchMode = (next: 'login' | 'register') => {
+    setMode(next);
     setAuthError(null);
+    setInfoMessage(null);
   };
 
-  // Backend integration point: connect to Supabase Auth here
   const handleLogin = async (data: LoginFormData) => {
     setIsLoading(true);
     setAuthError(null);
-    await new Promise((r) => setTimeout(r, 1200));
-    if (
-      data.email !== demoCredentials.email ||
-      data.password !== demoCredentials.password
-    ) {
-      setAuthError(
-        'Credenciales inválidas — usa las cuentas demo de abajo para ingresar'
-      );
-      setIsLoading(false);
+    const { error } = await signIn(data.email, data.password);
+    setIsLoading(false);
+    if (error) {
+      setAuthError('Credenciales inválidas. Verifica tu correo y contraseña.');
       return;
     }
-    // Navigate to dashboard on success
-    window.location.href = '/affiliate-dashboard';
+    router.push('/affiliate-dashboard');
   };
 
-  // Backend integration point: connect to Supabase Auth signup here
-  const handleRegister = async (_data: RegisterFormData) => {
+  const handleRegister = async (data: RegisterFormData) => {
     setIsLoading(true);
-    await new Promise((r) => setTimeout(r, 1200));
-    window.location.href = '/affiliate-dashboard';
+    setAuthError(null);
+    const { error, needsEmailConfirmation } = await signUp(data.email, data.password, data.name);
+    setIsLoading(false);
+    if (error) {
+      setAuthError(error.message || 'No se pudo crear tu cuenta. Intenta nuevamente.');
+      return;
+    }
+    if (needsEmailConfirmation) {
+      switchMode('login');
+      setInfoMessage('Revisa tu correo para confirmar tu cuenta antes de iniciar sesión.');
+      return;
+    }
+    router.push('/affiliate-dashboard');
   };
 
   return (
@@ -142,7 +138,7 @@ export default function AuthScreen() {
           {/* Mode toggle */}
           <div className="flex bg-muted rounded-xl p-1 mb-8">
             <button
-              onClick={() => { setMode('login'); setAuthError(null); }}
+              onClick={() => switchMode('login')}
               className={`flex-1 py-2.5 text-sm font-600 rounded-lg transition-all duration-200 ${
                 mode === 'login' ?'bg-card shadow-card text-foreground' :'text-muted-foreground hover:text-foreground'
               }`}
@@ -150,7 +146,7 @@ export default function AuthScreen() {
               Iniciar sesión
             </button>
             <button
-              onClick={() => { setMode('register'); setAuthError(null); }}
+              onClick={() => switchMode('register')}
               className={`flex-1 py-2.5 text-sm font-600 rounded-lg transition-all duration-200 ${
                 mode === 'register' ?'bg-card shadow-card text-foreground' :'text-muted-foreground hover:text-foreground'
               }`}
@@ -177,15 +173,31 @@ export default function AuthScreen() {
             </div>
           )}
 
-          {/* Google SSO */}
-          <button className="w-full flex items-center justify-center gap-3 px-4 py-3 bg-card border border-border rounded-xl text-sm font-600 text-foreground hover:bg-muted transition-all duration-150 mb-5 shadow-sm">
+          {/* Info alert (p.ej. confirmación de email pendiente) */}
+          {infoMessage && (
+            <div className="flex items-start gap-3 bg-positive/10 border border-positive/20 rounded-xl p-4 mb-5">
+              <CheckCircle2 size={16} className="text-positive mt-0.5 shrink-0" />
+              <p className="text-sm text-positive">{infoMessage}</p>
+            </div>
+          )}
+
+          {/* Google SSO — deshabilitado: pendiente de agregar
+              ref.walinka.com/auth/callback a las Redirect URLs del proyecto
+              Supabase (cambio remoto que requiere autorización aparte). */}
+          <button
+            type="button"
+            disabled
+            title="Disponible próximamente"
+            aria-disabled="true"
+            className="w-full flex items-center justify-center gap-3 px-4 py-3 bg-card border border-border rounded-xl text-sm font-600 text-muted-foreground opacity-60 cursor-not-allowed mb-5 shadow-sm"
+          >
             <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
               <path d="M17.64 9.205c0-.639-.057-1.252-.164-1.841H9v3.481h4.844a4.14 4.14 0 01-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" fill="#4285F4"/>
               <path d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 009 18z" fill="#34A853"/>
               <path d="M3.964 10.71A5.41 5.41 0 013.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 000 9c0 1.452.348 2.827.957 4.042l3.007-2.332z" fill="#FBBC05"/>
               <path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 00.957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z" fill="#EA4335"/>
             </svg>
-            Continuar con Google
+            Continuar con Google (próximamente)
           </button>
 
           <div className="flex items-center gap-3 mb-5">
@@ -407,65 +419,12 @@ export default function AuthScreen() {
             </form>
           )}
 
-          {/* Demo credentials */}
-          {mode === 'login' && (
-            <div className="mt-6 bg-secondary rounded-xl border border-primary/10 p-4">
-              <p className="text-xs font-600 text-primary mb-3 uppercase tracking-wider">
-                Cuenta demo
-              </p>
-              <div className="flex flex-col gap-2">
-                <div className="flex items-center justify-between bg-card rounded-lg px-3 py-2 border border-border">
-                  <div>
-                    <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-0.5">Email</p>
-                    <p className="text-xs font-600 text-foreground font-tabular">{demoCredentials.email}</p>
-                  </div>
-                  <button
-                    onClick={() => handleCopy('email', demoCredentials.email)}
-                    className="p-1.5 rounded-md hover:bg-muted transition-colors"
-                    aria-label="Copiar email"
-                  >
-                    {copiedField === 'email' ? (
-                      <Check size={13} className="text-accent" />
-                    ) : (
-                      <Copy size={13} className="text-muted-foreground" />
-                    )}
-                  </button>
-                </div>
-                <div className="flex items-center justify-between bg-card rounded-lg px-3 py-2 border border-border">
-                  <div>
-                    <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-0.5">Contraseña</p>
-                    <p className="text-xs font-600 text-foreground font-tabular">{demoCredentials.password}</p>
-                  </div>
-                  <button
-                    onClick={() => handleCopy('password', demoCredentials.password)}
-                    className="p-1.5 rounded-md hover:bg-muted transition-colors"
-                    aria-label="Copiar contraseña"
-                  >
-                    {copiedField === 'password' ? (
-                      <Check size={13} className="text-accent" />
-                    ) : (
-                      <Copy size={13} className="text-muted-foreground" />
-                    )}
-                  </button>
-                </div>
-                <button
-                  type="button"
-                  onClick={handleAutofill}
-                  className="w-full py-2 text-xs font-600 text-primary bg-primary/5 hover:bg-primary/10 rounded-lg transition-colors flex items-center justify-center gap-1.5"
-                >
-                  <CheckCircle size={13} />
-                  Usar estas credenciales
-                </button>
-              </div>
-            </div>
-          )}
-
           <p className="text-center text-xs text-muted-foreground mt-6">
             {mode === 'login' ? (
               <>
                 ¿No tienes cuenta?{' '}
                 <button
-                  onClick={() => setMode('register')}
+                  onClick={() => switchMode('register')}
                   className="text-primary font-600 hover:underline"
                 >
                   Regístrate gratis
@@ -475,7 +434,7 @@ export default function AuthScreen() {
               <>
                 ¿Ya tienes cuenta?{' '}
                 <button
-                  onClick={() => setMode('login')}
+                  onClick={() => switchMode('login')}
                   className="text-primary font-600 hover:underline"
                 >
                   Inicia sesión
