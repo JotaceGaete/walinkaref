@@ -64,7 +64,6 @@ export default function ReferralHero({ affiliateCode, affiliateName, signupUrl }
           {/* CTAs */}
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <a
-              id="crear-negocio"
               href={signupUrl}
               className="flex items-center justify-center gap-2 px-8 py-4 rounded-xl text-base font-700 text-white transition-all hover:-translate-y-0.5"
               style={{ background: 'linear-gradient(135deg, #7C3AED 0%, #EC4899 100%)', boxShadow: '0 4px 24px rgba(124,58,237,0.35)' }}

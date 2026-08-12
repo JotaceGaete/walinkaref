@@ -41,7 +41,7 @@ export default async function ReferralLandingPage({ params }: ReferralLandingPag
 
   return (
     <div className="min-h-screen bg-background">
-      <ReferralNav affiliateCode={code} affiliateName={resolution.referrerName} />
+      <ReferralNav affiliateCode={code} affiliateName={resolution.referrerName} signupUrl={signupUrl} />
       <ReferralHero affiliateCode={code} affiliateName={resolution.referrerName} signupUrl={signupUrl} />
       <WhatIsWalinka />
       <BenefitsSection />

@@ -41,26 +41,47 @@ describe('ReferralLandingPage (app/[code]/page.tsx)', () => {
     expect(container.textContent).toMatch(/Te recomendaron\s*Walinka\s*para hacer crecer tu negocio/);
   });
 
-  it('CTA principal contiene exactamente ?ref={code} hacia go.ventalink.app/business-registration', async () => {
+  it('TODOS los CTA "Crear mi negocio gratis" (header incluido) van directo a go.ventalink.app con ?ref={code} exacto — ninguno queda como ancla interna', async () => {
     resolveReferralCodeMock.mockResolvedValue({ valid: true, referrerName: 'Jota' });
 
     const jsx = await ReferralLandingPage({ params: Promise.resolve({ code: 'jota-f92ee' }) });
     const { container } = render(jsx);
 
-    const signupLinks = Array.from(container.querySelectorAll('a[href^="https://go.ventalink.app"]'));
-    // El hero y el CTA final apuntan directo al signup real.
-    expect(signupLinks.length).toBeGreaterThanOrEqual(2);
-    signupLinks.forEach((link) => {
+    // 3 CTA de registro en la página: header (nav), hero, CTA final.
+    const registrationCtas = screen.getAllByRole('link', { name: /crear mi negocio gratis/i });
+    expect(registrationCtas.length).toBe(3);
+    registrationCtas.forEach((link) => {
       expect(link.getAttribute('href')).toBe(
         'https://go.ventalink.app/business-registration?ref=jota-f92ee'
       );
     });
 
-    // El CTA del nav es un ancla interna al botón real del hero, no un link directo.
-    const navAnchor = screen
-      .getAllByRole('link', { name: /crear mi negocio gratis/i })
-      .find((l) => l.getAttribute('href') === '#crear-negocio');
-    expect(navAnchor).toBeDefined();
+    // Ninguna ancla "#crear-negocio" debe seguir existiendo en ningún lado.
+    expect(container.querySelector('a[href="#crear-negocio"]')).toBeNull();
+    expect(container.querySelector('#crear-negocio')).toBeNull();
+
+    // Los enlaces informativos ("Conocer Walinka") sí pueden seguir siendo
+    // navegación interna — no deben apuntar al signup.
+    const informativeLinks = screen.getAllByRole('link', { name: /conocer walinka/i });
+    expect(informativeLinks.length).toBeGreaterThan(0);
+    informativeLinks.forEach((link) => {
+      expect(link.getAttribute('href')).toBe('#que-es-walinka');
+    });
+  });
+
+  it('el CTA "Crear mi negocio gratis" del código construye el enlace con cada código distinto', async () => {
+    resolveReferralCodeMock.mockResolvedValue({ valid: true, referrerName: 'Otra Persona' });
+
+    const jsx = await ReferralLandingPage({ params: Promise.resolve({ code: 'otra-persona-abc12' }) });
+    render(jsx);
+
+    const registrationCtas = screen.getAllByRole('link', { name: /crear mi negocio gratis/i });
+    expect(registrationCtas.length).toBe(3);
+    registrationCtas.forEach((link) => {
+      expect(link.getAttribute('href')).toBe(
+        'https://go.ventalink.app/business-registration?ref=otra-persona-abc12'
+      );
+    });
   });
 
   it('código inválido (RPC responde valid:false): llama a notFound(), no renderiza ninguna invitación', async () => {

@@ -6,9 +6,10 @@ import { Users } from 'lucide-react';
 interface ReferralNavProps {
   affiliateCode: string;
   affiliateName?: string;
+  signupUrl: string;
 }
 
-export default function ReferralNav({ affiliateCode, affiliateName }: ReferralNavProps) {
+export default function ReferralNav({ affiliateCode, affiliateName, signupUrl }: ReferralNavProps) {
   return (
     <header className="sticky top-0 z-50 bg-card/95 backdrop-blur-md border-b border-border">
       <div className="max-w-screen-xl mx-auto px-6 lg:px-10 flex items-center justify-between h-16">
@@ -29,7 +30,7 @@ export default function ReferralNav({ affiliateCode, affiliateName }: ReferralNa
         </div>
 
         <a
-          href="#crear-negocio"
+          href={signupUrl}
           className="btn-accent px-5 py-2.5 text-sm"
         >
           Crear mi negocio gratis
