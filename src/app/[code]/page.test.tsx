@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import ReferralLandingPage from './page';
 
@@ -14,9 +14,17 @@ vi.mock('@/services/referralService', () => ({
   resolveReferralCode: (code: string) => resolveReferralCodeMock(code),
 }));
 
+const supabaseUrlMock = vi.hoisted(() => ({ current: 'https://real-project.supabase.co' }));
+vi.mock('@/lib/supabase', () => ({
+  get supabaseUrl() {
+    return supabaseUrlMock.current;
+  },
+}));
+
 describe('ReferralLandingPage (app/[code]/page.tsx)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    supabaseUrlMock.current = 'https://real-project.supabase.co';
   });
 
   it('código válido: resuelve vía wa_resolve_referral_code y renderiza la invitación con el nombre real', async () => {
@@ -94,14 +102,64 @@ describe('ReferralLandingPage (app/[code]/page.tsx)', () => {
     expect(notFoundMock).toHaveBeenCalledTimes(1);
   });
 
-  it('código inexistente / falla de resolución (la RPC lanza): también resulta en notFound(), sin reventar la página', async () => {
-    resolveReferralCodeMock.mockRejectedValue(new Error('network error'));
+  describe('falla de resolución (la RPC lanza: red/config/runtime) — distinto de código inválido', () => {
+    let consoleErrorSpy: ReturnType<typeof vi.spyOn>;
 
-    await expect(
-      ReferralLandingPage({ params: Promise.resolve({ code: 'cualquier-cosa' }) })
-    ).rejects.toThrow('NEXT_NOT_FOUND');
+    beforeEach(() => {
+      consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    });
 
-    expect(notFoundMock).toHaveBeenCalledTimes(1);
+    afterEach(() => {
+      consoleErrorSpy.mockRestore();
+    });
+
+    it('NO llama a notFound(): deja propagar el error original para que lo capture el error boundary', async () => {
+      resolveReferralCodeMock.mockRejectedValue(new Error('network error'));
+
+      await expect(
+        ReferralLandingPage({ params: Promise.resolve({ code: 'cualquier-cosa' }) })
+      ).rejects.toThrow('network error');
+
+      expect(notFoundMock).not.toHaveBeenCalled();
+    });
+
+    it('loguea server-side code, supabaseHost, errorMessage y errorCode — sin exponer la anon key', async () => {
+      const rpcError = Object.assign(new Error('fetch failed'), { code: 'ECONNREFUSED' });
+      resolveReferralCodeMock.mockRejectedValue(rpcError);
+      supabaseUrlMock.current = 'https://real-project.supabase.co';
+
+      await expect(
+        ReferralLandingPage({ params: Promise.resolve({ code: 'jota-f92ee' }) })
+      ).rejects.toThrow('fetch failed');
+
+      expect(consoleErrorSpy).toHaveBeenCalledWith(
+        expect.stringContaining('wa_resolve_referral_code'),
+        expect.objectContaining({
+          code: 'jota-f92ee',
+          supabaseHost: 'real-project.supabase.co',
+          isDummySupabaseUrl: false,
+          errorMessage: 'fetch failed',
+          errorCode: 'ECONNREFUSED',
+        })
+      );
+
+      const loggedPayload = JSON.stringify(consoleErrorSpy.mock.calls[0]);
+      expect(loggedPayload).not.toMatch(/anon|apikey|eyJ/i);
+    });
+
+    it('detecta y reporta explícitamente cuando NEXT_PUBLIC_SUPABASE_URL sigue en el valor dummy de placeholder', async () => {
+      resolveReferralCodeMock.mockRejectedValue(new Error('network error'));
+      supabaseUrlMock.current = 'https://dummy.supabase.co';
+
+      await expect(
+        ReferralLandingPage({ params: Promise.resolve({ code: 'jota-f92ee' }) })
+      ).rejects.toThrow('network error');
+
+      expect(consoleErrorSpy).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({ isDummySupabaseUrl: true, supabaseHost: 'dummy.supabase.co' })
+      );
+    });
   });
 
   it('nunca renderiza PII (email o UUID) en ningún lado de la página', async () => {

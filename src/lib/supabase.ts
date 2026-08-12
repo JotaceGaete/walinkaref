@@ -1,6 +1,9 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = (process.env.NEXT_PUBLIC_SUPABASE_URL ?? '').replace(/\/$/, '');
+// Exportado (solo la URL, nunca la anon key) para diagnóstico server-side:
+// permite loguear el host de Supabase contra el que se está corriendo sin
+// tocar credenciales.
+export const supabaseUrl = (process.env.NEXT_PUBLIC_SUPABASE_URL ?? '').replace(/\/$/, '');
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? '';
 
 if (!supabaseUrl || !supabaseAnonKey) {

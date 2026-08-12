@@ -11,6 +11,7 @@ import ReferralFAQ from './components/ReferralFAQ';
 import ReferralCTA from './components/ReferralCTA';
 import ReferralFooter from './components/ReferralFooter';
 import { resolveReferralCode } from '@/services/referralService';
+import { supabaseUrl } from '@/lib/supabase';
 
 const BUSINESS_SIGNUP_URL = 'https://go.ventalink.app/business-registration';
 
@@ -18,19 +19,51 @@ interface ReferralLandingPageProps {
   params: Promise<{ code: string }>;
 }
 
+/**
+ * DIAGNÓSTICO TEMPORAL: separa "código inválido" (404 real) de "no pudimos
+ * verificarlo" (error de RPC/conexión/configuración). Loguea únicamente
+ * datos no sensibles -- nunca la anon key -- para poder identificar la causa
+ * de un 404 en producción sin exponer nada en el cliente.
+ */
+function logReferralResolutionError(code: string, err: unknown) {
+  const supabaseHost = (() => {
+    try {
+      return new URL(supabaseUrl).host;
+    } catch {
+      return supabaseUrl ? 'invalid-url' : 'empty';
+    }
+  })();
+  const isDummySupabaseUrl = supabaseUrl.includes('dummy.supabase.co');
+  const errorMessage = err instanceof Error ? err.message : String(err);
+  const errorCode = (err as { code?: unknown })?.code;
+
+  console.error('[ReferralLandingPage] wa_resolve_referral_code falló (no es un código inválido)', {
+    code,
+    supabaseHost,
+    isDummySupabaseUrl,
+    errorMessage,
+    errorCode,
+  });
+}
+
 export default async function ReferralLandingPage({ params }: ReferralLandingPageProps) {
   const { code } = await params;
 
   // wa_resolve_referral_code es la única fuente de verdad: nunca se arma una
   // invitación a partir del propio segmento de URL sin validarlo server-side.
-  // Un código inválido y un error de resolución se tratan igual (404): no
-  // hay forma segura de mostrar una invitación cuando no pudimos confirmarla.
+  //
+  // "Código inválido" (valid:false) y "no pudimos verificar el código"
+  // (la RPC lanza -- red/config/runtime) ya NO se tratan igual: solo el
+  // primero es un 404 real. El segundo no es culpa del visitante ni del
+  // código, así que se deja propagar como error de servidor (visible en
+  // logs y en el error boundary de este segmento) en vez de disfrazarse de
+  // "este enlace no existe".
   let resolution;
   try {
     resolution = await resolveReferralCode(code);
   } catch (err) {
-    console.error('[ReferralLandingPage] resolveReferralCode failed:', err);
-    notFound();
+    logReferralResolutionError(code, err);
+    throw err;
   }
 
   if (!resolution.valid) {
