@@ -27,6 +27,23 @@ export interface ReferralListItem {
   qualified: boolean;
 }
 
+export interface ReferralCodeResolution {
+  valid: boolean;
+  referrerName?: string;
+}
+
+/**
+ * Resolución pública de un código de referido (para la landing dinámica
+ * ref.walinka.com/{code}). wa_resolve_referral_code está grant-eada a
+ * `anon` — se puede llamar sin sesión, desde un Server Component. Nunca
+ * expone email/UUID/negocio, solo {valid, referrerName?}.
+ */
+export async function resolveReferralCode(code: string): Promise<ReferralCodeResolution> {
+  const { data, error } = await supabase.rpc('wa_resolve_referral_code', { p_code: code });
+  if (error) throw error;
+  return data as ReferralCodeResolution;
+}
+
 /** Resumen agregado del programa de afiliados para el usuario autenticado. */
 export async function getMyReferralStats(): Promise<ReferralStats> {
   const { data, error } = await supabase.rpc('wa_get_my_referral_stats');

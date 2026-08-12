@@ -1,14 +1,13 @@
 import React from 'react';
 import { ArrowRight, Shield, Clock, MessageCircle } from 'lucide-react';
-import Icon from '@/components/ui/AppIcon';
-
 
 interface ReferralCTAProps {
   affiliateCode: string;
   affiliateName?: string;
+  signupUrl: string;
 }
 
-export default function ReferralCTA({ affiliateCode, affiliateName }: ReferralCTAProps) {
+export default function ReferralCTA({ affiliateCode, affiliateName, signupUrl }: ReferralCTAProps) {
   const invitationNote = affiliateName
     ? `${affiliateName} te recomendó Walinka. Tu registro conservará su código de invitación.`
     : 'Llegaste aquí por recomendación. Tu registro conservará el código de invitación.';
@@ -45,7 +44,7 @@ export default function ReferralCTA({ affiliateCode, affiliateName }: ReferralCT
 
           <div className="flex flex-col sm:flex-row gap-3 justify-center mb-8">
             <a
-              href="#"
+              href={signupUrl}
               className="flex items-center justify-center gap-2 px-8 py-4 bg-white rounded-xl text-base font-700 hover:bg-white/95 transition-all hover:shadow-lg hover:-translate-y-0.5"
               style={{ color: '#7C3AED' }}
             >

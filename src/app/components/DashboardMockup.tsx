@@ -69,7 +69,7 @@ export default function DashboardMockup() {
             <TrendingUp size={10} className="text-white" />
           </div>
           <span className="text-xs text-primary font-600 truncate">
-            ref.walinka.com/juan-f92ee
+            ref.walinka.com/tu-nombre
           </span>
           <span className="ml-auto text-[10px] text-primary/60 font-500 whitespace-nowrap">
             Copiar
