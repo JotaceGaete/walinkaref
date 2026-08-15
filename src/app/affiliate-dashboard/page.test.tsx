@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import AffiliateDashboardPage from './page';
 
 vi.mock('next/navigation', () => ({
@@ -17,28 +17,50 @@ vi.mock('@/contexts/AuthContext', () => ({
 
 const getMyReferralStatsMock = vi.fn();
 const listMyReferralsMock = vi.fn();
+const listMyReferralPayoutsMock = vi.fn();
+const requestReferralPayoutMock = vi.fn();
 vi.mock('@/services/referralService', () => ({
   getMyReferralStats: () => getMyReferralStatsMock(),
   listMyReferrals: (...args: unknown[]) => listMyReferralsMock(...args),
+  listMyReferralPayouts: (...args: unknown[]) => listMyReferralPayoutsMock(...args),
+  requestReferralPayout: (...args: unknown[]) => requestReferralPayoutMock(...args),
 }));
+
+const baseStats = {
+  code: 'juan-f92ee',
+  rewardAmount: 5,
+  rewardCurrency: 'USD',
+  requiredPaidMonths: 2,
+  invitedCount: 34,
+  oneMonthCount: 9,
+  qualifiedCount: 11,
+  pendingAmount: 0,
+  availableAmount: 30,
+  totalEarnedAmount: 55,
+  pendingPayoutsByCurrency: [],
+};
 
 describe('AffiliateDashboardPage (integración)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    getMyReferralStatsMock.mockResolvedValue({
-      code: 'juan-f92ee',
-      rewardAmount: 5,
-      rewardCurrency: 'USD',
-      requiredPaidMonths: 2,
-      invitedCount: 34,
-      oneMonthCount: 9,
-      qualifiedCount: 11,
-      pendingAmount: 0,
-      availableAmount: 30,
-      totalEarnedAmount: 55,
-    });
+    getMyReferralStatsMock.mockResolvedValue(baseStats);
     listMyReferralsMock.mockResolvedValue([
       { publicLabel: 'Usuario #91AE', createdAt: '2026-06-01T00:00:00Z', paidMonths: 2, qualified: true },
+    ]);
+    listMyReferralPayoutsMock.mockResolvedValue([
+      {
+        payoutId: 'p-1',
+        status: 'requested',
+        requestedAmount: 10,
+        currency: 'USD',
+        requestedAt: '2026-06-01T00:00:00Z',
+        paidAt: null,
+        rejectedAt: null,
+        externalReference: null,
+        rejectedReason: null,
+        payoutMethod: 'bank_transfer',
+        maskedAccountNumber: '••••••7890',
+      },
     ]);
   });
 
@@ -89,6 +111,7 @@ describe('AffiliateDashboardPage (integración)', () => {
       pendingAmount: 0,
       availableAmount: 0,
       totalEarnedAmount: 0,
+      pendingPayoutsByCurrency: [],
     });
     listMyReferralsMock.mockResolvedValue([]);
 
@@ -98,5 +121,37 @@ describe('AffiliateDashboardPage (integración)', () => {
     const referidosLink = await within(sidebar).findByText('Referidos');
     await waitFor(() => expect(referidosLink.closest('a')).toHaveTextContent('0'));
     expect(within(sidebar).queryByText('14')).not.toBeInTheDocument();
+  });
+
+  it('carga el historial de retiros real (wa_list_my_referral_payouts) y lo muestra', async () => {
+    render(<AffiliateDashboardPage />);
+
+    await waitFor(() => expect(listMyReferralPayoutsMock).toHaveBeenCalledWith({ limit: 20, offset: 0 }));
+    expect(await screen.findByText('••••••7890', { exact: false })).toBeInTheDocument();
+    expect(screen.getByText('Solicitado')).toBeInTheDocument();
+  });
+
+  it('una solicitud de retiro exitosa refresca tanto stats como el historial de retiros', async () => {
+    render(<AffiliateDashboardPage />);
+
+    await waitFor(() => expect(getMyReferralStatsMock).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(listMyReferralPayoutsMock).toHaveBeenCalledTimes(1));
+
+    fireEvent.change(screen.getByLabelText('País'), { target: { value: 'CL' } });
+    fireEvent.change(screen.getByLabelText('Nombre del titular'), { target: { value: 'Juan Perez' } });
+    fireEvent.change(screen.getByLabelText('Banco'), { target: { value: 'Banco Estado' } });
+    fireEvent.change(screen.getByLabelText('Tipo de cuenta'), { target: { value: 'checking' } });
+    fireEvent.change(screen.getByLabelText('Número de cuenta'), { target: { value: '1234567890' } });
+
+    requestReferralPayoutMock.mockResolvedValue({
+      requested: true,
+      payouts: [{ currency: 'USD', created: true, amount: 10, payoutId: 'p-2' }],
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: /solicitar retiro/i }));
+
+    await waitFor(() => expect(screen.getByText(/solicitud enviada/i)).toBeInTheDocument());
+    await waitFor(() => expect(getMyReferralStatsMock).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(listMyReferralPayoutsMock).toHaveBeenCalledTimes(2));
   });
 });

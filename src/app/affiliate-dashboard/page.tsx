@@ -4,10 +4,14 @@ import DashboardLayout from '@/components/DashboardLayout';
 import DashboardKPIs from './components/DashboardKPIs';
 import ReferralLinkWidget from './components/ReferralLinkWidget';
 import ReferralTable from './components/ReferralTable';
+import PayoutRequestCard from './components/PayoutRequestCard';
+import PayoutHistoryTable from './components/PayoutHistoryTable';
 import {
   getMyReferralStats,
   listMyReferrals,
+  listMyReferralPayouts,
   type ReferralListItem,
+  type ReferralPayout,
   type ReferralStats,
 } from '@/services/referralService';
 
@@ -20,8 +24,12 @@ export default function AffiliateDashboardPage() {
   const [listLoading, setListLoading] = useState(true);
   const [listError, setListError] = useState(false);
 
-  // Independiente de loadReferrals: si stats falla, la tabla de referidos
-  // sigue funcionando (y viceversa) — ninguna sección tumba la página entera.
+  const [payouts, setPayouts] = useState<ReferralPayout[]>([]);
+  const [payoutsLoading, setPayoutsLoading] = useState(true);
+  const [payoutsError, setPayoutsError] = useState(false);
+
+  // Independiente de las demás cargas: si una sección falla, las otras 2
+  // siguen funcionando -- ninguna tumba la página entera.
   const loadStats = useCallback(() => {
     setStatsLoading(true);
     setStatsError(false);
@@ -46,10 +54,31 @@ export default function AffiliateDashboardPage() {
       .finally(() => setListLoading(false));
   }, []);
 
+  const loadPayouts = useCallback(() => {
+    setPayoutsLoading(true);
+    setPayoutsError(false);
+    listMyReferralPayouts({ limit: 20, offset: 0 })
+      .then((data) => setPayouts(data))
+      .catch((err) => {
+        console.warn('[AffiliateDashboard] listMyReferralPayouts failed:', err?.message);
+        setPayoutsError(true);
+      })
+      .finally(() => setPayoutsLoading(false));
+  }, []);
+
   useEffect(() => {
     loadStats();
     loadReferrals();
-  }, [loadStats, loadReferrals]);
+    loadPayouts();
+  }, [loadStats, loadReferrals, loadPayouts]);
+
+  // Tras una solicitud de retiro exitosa: refrescar stats (availableAmount/
+  // pendingPayoutsByCurrency cambiaron) e historial (nueva fila) -- nunca
+  // un update optimista local de estos datos financieros.
+  const handlePayoutRequestSuccess = useCallback(() => {
+    loadStats();
+    loadPayouts();
+  }, [loadStats, loadPayouts]);
 
   return (
     <DashboardLayout referralsCount={stats?.invitedCount}>
@@ -68,11 +97,28 @@ export default function AffiliateDashboardPage() {
           </div>
         </div>
 
-        {/* KPIs (wa_get_my_referral_stats) */}
+        {/* KPIs + retiros solicitados (wa_get_my_referral_stats) */}
         <DashboardKPIs stats={stats} loading={statsLoading} error={statsError} onRetry={loadStats} />
 
         {/* Link widget (mismo stats: comparte la llamada de arriba, sin duplicarla) */}
         <ReferralLinkWidget stats={stats} loading={statsLoading} error={statsError} onRetry={loadStats} />
+
+        {/* Solicitar retiro (wa_request_referral_payout) -- el frontend nunca
+            elige comisiones, solo envía el snapshot bancario. */}
+        <PayoutRequestCard
+          availableAmount={stats?.availableAmount ?? 0}
+          onSuccess={handlePayoutRequestSuccess}
+        />
+
+        {/* Historial de retiros (wa_list_my_referral_payouts) */}
+        <div className="mb-6">
+          <PayoutHistoryTable
+            payouts={payouts}
+            loading={payoutsLoading}
+            error={payoutsError}
+            onRetry={loadPayouts}
+          />
+        </div>
 
         {/* Tabla de referidos (wa_list_my_referrals) */}
         <ReferralTable

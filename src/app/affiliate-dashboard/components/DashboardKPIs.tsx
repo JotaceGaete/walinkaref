@@ -1,5 +1,5 @@
 import React from 'react';
-import { Users, CheckCircle, Clock, Hourglass, Wallet, TrendingUp, AlertTriangle } from 'lucide-react';
+import { Users, CheckCircle, Clock, Hourglass, Wallet, TrendingUp, AlertTriangle, Send } from 'lucide-react';
 import type { ReferralStats } from '@/services/referralService';
 
 interface DashboardKPIsProps {
@@ -96,36 +96,72 @@ export default function DashboardKPIs({ stats, loading, error, onRetry }: Dashbo
     },
   ];
 
+  // pendingPayoutsByCurrency es multimoneda: cada elemento se muestra por
+  // separado, NUNCA se suman entre sí (un afiliado puede tener retiros
+  // 'requested' en más de una moneda a la vez -- ver wa_get_my_referral_stats
+  // en el repo saas). Se oculta la sección completa si no hay nada
+  // 'requested' en este momento, en vez de mostrar un "0" que podría
+  // confundirse con una suma.
+  const pendingPayouts = stats?.pendingPayoutsByCurrency ?? [];
+
   return (
-    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
-      {kpis.map((kpi) => {
-        const Icon = kpi.icon;
-        return (
-          <div
-            key={kpi.id}
-            className={`bg-card shadow-card rounded-2xl p-5 border ${kpi.cardClass} flex flex-col gap-3`}
-          >
-            <div className="flex items-center justify-between">
-              <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${kpi.iconBg}`}>
-                <Icon size={16} className={kpi.iconColor} />
+    <>
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
+        {kpis.map((kpi) => {
+          const Icon = kpi.icon;
+          return (
+            <div
+              key={kpi.id}
+              className={`bg-card shadow-card rounded-2xl p-5 border ${kpi.cardClass} flex flex-col gap-3`}
+            >
+              <div className="flex items-center justify-between">
+                <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${kpi.iconBg}`}>
+                  <Icon size={16} className={kpi.iconColor} />
+                </div>
               </div>
+              <div>
+                {loading ? (
+                  <div className="h-7 w-16 rounded-lg bg-muted animate-pulse mb-1" />
+                ) : (
+                  <p className="text-2xl font-800 text-foreground font-tabular leading-none mb-1">
+                    {kpi.value}
+                  </p>
+                )}
+                <p className="text-xs font-500 text-muted-foreground">{kpi.label}</p>
+              </div>
+              {!loading && kpi.subtext && (
+                <p className="text-xs font-600 text-muted-foreground">{kpi.subtext}</p>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      {loading ? (
+        <div className="h-20 rounded-2xl bg-muted animate-pulse mb-6" />
+      ) : pendingPayouts.length > 0 ? (
+        <div className="bg-card shadow-card rounded-2xl border border-border p-5 mb-6">
+          <div className="flex items-center gap-2 mb-3">
+            <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-pending/10">
+              <Send size={16} className="text-pending" />
             </div>
             <div>
-              {loading ? (
-                <div className="h-7 w-16 rounded-lg bg-muted animate-pulse mb-1" />
-              ) : (
-                <p className="text-2xl font-800 text-foreground font-tabular leading-none mb-1">
-                  {kpi.value}
-                </p>
-              )}
-              <p className="text-xs font-500 text-muted-foreground">{kpi.label}</p>
+              <p className="text-sm font-700 text-foreground">Retiros solicitados</p>
+              <p className="text-xs text-muted-foreground">En revisión por el equipo Walinka</p>
             </div>
-            {!loading && kpi.subtext && (
-              <p className="text-xs font-600 text-muted-foreground">{kpi.subtext}</p>
-            )}
           </div>
-        );
-      })}
-    </div>
+          {/* Una línea por moneda -- nunca un total combinado. */}
+          <div className="flex flex-wrap gap-3">
+            {pendingPayouts.map((p) => (
+              <div key={p.currency} className="px-4 py-2 rounded-xl bg-muted">
+                <p className="text-lg font-800 text-foreground font-tabular leading-none">
+                  {formatMoney(p.amount, p.currency)}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : null}
+    </>
   );
 }
