@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import AffiliateResourcesPage from './page';
 
 vi.mock('next/navigation', () => ({
@@ -43,6 +43,16 @@ describe('AffiliateResourcesPage (integración)', () => {
     await waitFor(() => expect(getMyReferralStatsMock).toHaveBeenCalledTimes(1));
     expect(await screen.findByText(/ref\.walinka\.com\/jota-f92ee/)).toBeInTheDocument();
     expect(screen.queryByText(/juan-f92ee/)).not.toBeInTheDocument();
+  });
+
+  it('la página sigue renderizando aunque Recursos ya no se anuncie en el sidebar', async () => {
+    render(<AffiliateResourcesPage />);
+
+    expect(await screen.findByRole('heading', { name: 'Recursos para afiliados' })).toBeInTheDocument();
+    expect(within(screen.getByRole('navigation')).queryByText('Recursos')).not.toBeInTheDocument();
+    expect(screen.queryByText(/solicitud de retiro todavía está en construcción/i)).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: '¿Cómo retiro mis ganancias?' }));
+    expect(screen.getByText(/puedes completar tus datos bancarios y solicitar el retiro/i)).toBeInTheDocument();
   });
 
   it('el badge "Referidos" del sidebar también muestra invitedCount real en esta página', async () => {

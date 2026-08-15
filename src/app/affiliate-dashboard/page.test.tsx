@@ -87,6 +87,8 @@ describe('AffiliateDashboardPage (integración)', () => {
     const main = screen.getByRole('main');
     expect(await within(main).findByText('34')).toBeInTheDocument(); // invitedCount
     expect(await within(main).findByText('Usuario #91AE')).toBeInTheDocument(); // de la lista
+    expect(document.getElementById('mi-enlace')).toBeInTheDocument();
+    expect(document.getElementById('referidos')).toBeInTheDocument();
   });
 
   it('el badge "Referidos" del sidebar muestra invitedCount real (34), nunca el "14" fijo de Rocket', async () => {

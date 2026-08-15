@@ -1,6 +1,6 @@
 'use client';
 import React, { useState } from 'react';
-import { Copy, Check, ExternalLink, Share2, QrCode, AlertTriangle } from 'lucide-react';
+import { Copy, Check, ExternalLink, Share2, AlertTriangle } from 'lucide-react';
 import type { ReferralStats } from '@/services/referralService';
 
 interface ReferralLinkWidgetProps {
@@ -17,6 +17,7 @@ function formatMoney(amount: number | undefined, currency: string | undefined) {
 
 export default function ReferralLinkWidget({ stats, loading, error, onRetry }: ReferralLinkWidgetProps) {
   const [copied, setCopied] = useState(false);
+  const [shared, setShared] = useState(false);
 
   if (error) {
     return (
@@ -45,6 +46,27 @@ export default function ReferralLinkWidget({ stats, loading, error, onRetry }: R
     setTimeout(() => setCopied(false), 2500);
   };
 
+  const handleShare = async () => {
+    if (!affiliateLink) return;
+    const url = `https://${affiliateLink}`;
+
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: 'Walinka', text: 'Conoce Walinka con mi enlace de afiliado', url });
+        setShared(true);
+        setTimeout(() => setShared(false), 2500);
+        return;
+      } catch (error) {
+        if (error instanceof DOMException && error.name === 'AbortError') return;
+      }
+    }
+
+    if (!navigator.clipboard) return;
+    await navigator.clipboard.writeText(url);
+    setShared(true);
+    setTimeout(() => setShared(false), 2500);
+  };
+
   return (
     <div className="bg-card shadow-card rounded-2xl border border-border p-6 mb-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -57,13 +79,14 @@ export default function ReferralLinkWidget({ stats, loading, error, onRetry }: R
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <button className="flex items-center gap-1.5 px-3 py-2 text-xs font-600 text-muted-foreground border border-border rounded-lg hover:bg-muted transition-all">
-            <QrCode size={14} />
-            QR
-          </button>
-          <button className="flex items-center gap-1.5 px-3 py-2 text-xs font-600 text-primary bg-secondary rounded-lg hover:bg-primary/15 transition-all border border-primary/10">
-            <Share2 size={14} />
-            Compartir
+          <button
+            type="button"
+            onClick={handleShare}
+            disabled={!affiliateLink}
+            className="flex items-center gap-1.5 px-3 py-2 text-xs font-600 text-primary bg-secondary rounded-lg hover:bg-primary/15 transition-all border border-primary/10 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {shared ? <Check size={14} /> : <Share2 size={14} />}
+            {shared ? 'Compartido' : 'Compartir'}
           </button>
         </div>
       </div>

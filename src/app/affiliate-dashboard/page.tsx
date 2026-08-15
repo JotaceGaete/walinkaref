@@ -101,7 +101,9 @@ export default function AffiliateDashboardPage() {
         <DashboardKPIs stats={stats} loading={statsLoading} error={statsError} onRetry={loadStats} />
 
         {/* Link widget (mismo stats: comparte la llamada de arriba, sin duplicarla) */}
-        <ReferralLinkWidget stats={stats} loading={statsLoading} error={statsError} onRetry={loadStats} />
+        <section id="mi-enlace" className="scroll-mt-6">
+          <ReferralLinkWidget stats={stats} loading={statsLoading} error={statsError} onRetry={loadStats} />
+        </section>
 
         {/* Solicitar retiro (wa_request_referral_payout) -- el frontend nunca
             elige comisiones, solo envía el snapshot bancario. */}
@@ -121,13 +123,15 @@ export default function AffiliateDashboardPage() {
         </div>
 
         {/* Tabla de referidos (wa_list_my_referrals) */}
-        <ReferralTable
-          referrals={referrals}
-          loading={listLoading}
-          error={listError}
-          onRetry={loadReferrals}
-          requiredPaidMonths={stats?.requiredPaidMonths ?? 2}
-        />
+        <section id="referidos" className="scroll-mt-6">
+          <ReferralTable
+            referrals={referrals}
+            loading={listLoading}
+            error={listError}
+            onRetry={loadReferrals}
+            requiredPaidMonths={stats?.requiredPaidMonths ?? 2}
+          />
+        </section>
       </div>
     </DashboardLayout>
   );

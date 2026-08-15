@@ -16,7 +16,7 @@ const faqs = [
   {
     id: 'faq-3',
     q: '¿Cómo retiro mis ganancias?',
-    a: 'El monto que ves como "Disponible" en tu panel ya está confirmado y es tuyo. La solicitud de retiro todavía está en construcción — en cuanto esté lista para que la uses, te avisaremos.',
+    a: 'El monto que ves como "Disponible" en tu panel ya está confirmado. Cuando tengas saldo disponible, puedes completar tus datos bancarios y solicitar el retiro desde el panel. También podrás revisar allí el estado de tus solicitudes.',
   },
   {
     id: 'faq-4',
