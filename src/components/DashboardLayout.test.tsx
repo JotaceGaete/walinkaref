@@ -102,11 +102,11 @@ describe('DashboardLayout — badge de "Referidos" en el sidebar', () => {
     expect(within(nav).getAllByRole('link').filter((link) => link.hasAttribute('aria-current'))).toHaveLength(1);
   });
 
-  it('no anuncia Recursos, Configuración ni notificaciones', () => {
+  it('anuncia Configuración como ruta real, pero no Recursos ni notificaciones', () => {
     render(<DashboardLayout>contenido</DashboardLayout>);
 
     expect(screen.queryByText('Recursos')).not.toBeInTheDocument();
-    expect(screen.queryByText('Configuración')).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Configuración' })).toHaveAttribute('href', '/affiliate-settings');
     expect(screen.queryByRole('button', { name: /notificaciones/i })).not.toBeInTheDocument();
   });
 

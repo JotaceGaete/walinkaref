@@ -3,15 +3,16 @@ import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import AppLogo from '@/components/ui/AppLogo';
-import { LayoutDashboard, Users, Link2, ChevronLeft, ChevronRight, LogOut, Menu } from 'lucide-react';
+import { LayoutDashboard, Users, Link2, Settings, ChevronLeft, ChevronRight, LogOut, Menu } from 'lucide-react';
 import Icon from '@/components/ui/AppIcon';
 import { useAuth } from '@/contexts/AuthContext';
 
 
 const sidebarLinks = [
-  { label: 'Dashboard', href: '/affiliate-dashboard', hash: '', icon: LayoutDashboard, badgeKey: null },
-  { label: 'Referidos', href: '/affiliate-dashboard#referidos', hash: '#referidos', icon: Users, badgeKey: 'referrals' },
-  { label: 'Mi enlace', href: '/affiliate-dashboard#mi-enlace', hash: '#mi-enlace', icon: Link2, badgeKey: null },
+  { label: 'Dashboard', href: '/affiliate-dashboard', pathname: '/affiliate-dashboard', hash: '', icon: LayoutDashboard, badgeKey: null },
+  { label: 'Referidos', href: '/affiliate-dashboard#referidos', pathname: '/affiliate-dashboard', hash: '#referidos', icon: Users, badgeKey: 'referrals' },
+  { label: 'Mi enlace', href: '/affiliate-dashboard#mi-enlace', pathname: '/affiliate-dashboard', hash: '#mi-enlace', icon: Link2, badgeKey: null },
+  { label: 'Configuración', href: '/affiliate-settings', pathname: '/affiliate-settings', hash: '', icon: Settings, badgeKey: null },
 ] as const;
 
 interface DashboardLayoutProps {
@@ -105,7 +106,7 @@ export default function DashboardLayout({ children, referralsCount }: DashboardL
             </p>
           )}
           {sidebarLinks.map((link) => {
-            const isActive = pathname === '/affiliate-dashboard' && activeHash === link.hash;
+            const isActive = pathname === link.pathname && activeHash === link.hash;
             const Icon = link.icon;
             const badge = link.badgeKey === 'referrals' ? referralsCount : null;
             const hasBadge = badge !== null && badge !== undefined;
