@@ -89,17 +89,23 @@ export default function AuthScreen() {
   };
 
   return (
-    <div className="min-h-screen flex">
+    <div data-testid="auth-screen" className="flex min-h-screen w-full min-w-0 overflow-x-hidden">
       {/* Left panel */}
       <div className="hidden lg:flex lg:w-1/2 gradient-hero flex-col justify-between p-12 relative overflow-hidden">
         {/* Decorative circles */}
         <div
           className="absolute top-0 right-0 w-96 h-96 rounded-full opacity-10"
-          style={{ background: 'radial-gradient(circle, #ffffff, transparent 70%)', transform: 'translate(30%, -30%)' }}
+          style={{
+            background: 'radial-gradient(circle, #ffffff, transparent 70%)',
+            transform: 'translate(30%, -30%)',
+          }}
         />
         <div
           className="absolute bottom-0 left-0 w-64 h-64 rounded-full opacity-10"
-          style={{ background: 'radial-gradient(circle, #00C896, transparent 70%)', transform: 'translate(-30%, 30%)' }}
+          style={{
+            background: 'radial-gradient(circle, #00C896, transparent 70%)',
+            transform: 'translate(-30%, 30%)',
+          }}
         />
 
         <div className="relative">
@@ -109,7 +115,10 @@ export default function AuthScreen() {
           </div>
 
           <h2 className="text-3xl font-800 text-white leading-tight mb-4">
-            Gana recomendando<br />una plataforma que<br />
+            Gana recomendando
+            <br />
+            una plataforma que
+            <br />
             <span className="text-accent">los negocios aman.</span>
           </h2>
           <p className="text-white/70 text-base leading-relaxed">
@@ -141,28 +150,32 @@ export default function AuthScreen() {
       </div>
 
       {/* Right panel */}
-      <div className="flex-1 flex flex-col justify-center px-6 py-12 sm:px-10 lg:px-16 bg-background">
+      <div className="flex min-w-0 flex-1 flex-col justify-center bg-background px-4 py-8 sm:px-10 sm:py-12 lg:px-16">
         {/* Mobile logo */}
-        <div className="lg:hidden flex items-center gap-2.5 mb-10">
+        <div className="mb-8 flex items-center gap-2.5 lg:hidden sm:mb-10">
           <AppLogo size={28} />
           <span className="font-bold text-base text-foreground">WalinkaRef</span>
         </div>
 
-        <div className="w-full max-w-md mx-auto">
+        <div className="mx-auto w-full min-w-0 max-w-md">
           {/* Mode toggle */}
-          <div className="flex bg-muted rounded-xl p-1 mb-8">
+          <div className="mb-8 flex min-w-0 rounded-xl bg-muted p-1">
             <button
               onClick={() => switchMode('login')}
-              className={`flex-1 py-2.5 text-sm font-600 rounded-lg transition-all duration-200 ${
-                mode === 'login' ?'bg-card shadow-card text-foreground' :'text-muted-foreground hover:text-foreground'
+              className={`min-w-0 flex-1 rounded-lg px-2 py-2.5 text-sm font-600 transition-all duration-200 ${
+                mode === 'login'
+                  ? 'bg-card shadow-card text-foreground'
+                  : 'text-muted-foreground hover:text-foreground'
               }`}
             >
               Iniciar sesión
             </button>
             <button
               onClick={() => switchMode('register')}
-              className={`flex-1 py-2.5 text-sm font-600 rounded-lg transition-all duration-200 ${
-                mode === 'register' ?'bg-card shadow-card text-foreground' :'text-muted-foreground hover:text-foreground'
+              className={`min-w-0 flex-1 rounded-lg px-2 py-2.5 text-sm font-600 transition-all duration-200 ${
+                mode === 'register'
+                  ? 'bg-card shadow-card text-foreground'
+                  : 'text-muted-foreground hover:text-foreground'
               }`}
             >
               Crear cuenta
@@ -175,7 +188,9 @@ export default function AuthScreen() {
               {mode === 'login' ? 'Bienvenido de vuelta' : 'Únete al programa'}
             </h1>
             <p className="text-sm text-muted-foreground">
-              {mode === 'login' ?'Ingresa a tu panel de afiliado' :'Crea tu cuenta y empieza a ganar'}
+              {mode === 'login'
+                ? 'Ingresa a tu panel de afiliado'
+                : 'Crea tu cuenta y empieza a ganar'}
             </p>
           </div>
 
@@ -209,10 +224,22 @@ export default function AuthScreen() {
               <div className="w-4 h-4 border-2 border-foreground/20 border-t-foreground rounded-full animate-spin" />
             ) : (
               <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-                <path d="M17.64 9.205c0-.639-.057-1.252-.164-1.841H9v3.481h4.844a4.14 4.14 0 01-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" fill="#4285F4"/>
-                <path d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 009 18z" fill="#34A853"/>
-                <path d="M3.964 10.71A5.41 5.41 0 013.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 000 9c0 1.452.348 2.827.957 4.042l3.007-2.332z" fill="#FBBC05"/>
-                <path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 00.957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z" fill="#EA4335"/>
+                <path
+                  d="M17.64 9.205c0-.639-.057-1.252-.164-1.841H9v3.481h4.844a4.14 4.14 0 01-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z"
+                  fill="#4285F4"
+                />
+                <path
+                  d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 009 18z"
+                  fill="#34A853"
+                />
+                <path
+                  d="M3.964 10.71A5.41 5.41 0 013.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 000 9c0 1.452.348 2.827.957 4.042l3.007-2.332z"
+                  fill="#FBBC05"
+                />
+                <path
+                  d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 00.957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z"
+                  fill="#EA4335"
+                />
               </svg>
             )}
             {isGoogleLoading ? 'Conectando...' : 'Continuar con Google'}
@@ -241,14 +268,19 @@ export default function AuthScreen() {
                   placeholder="tu@email.com"
                 />
                 {loginForm.formState.errors.email && (
-                  <p className="text-xs text-danger mt-1.5">{loginForm.formState.errors.email.message}</p>
+                  <p className="text-xs text-danger mt-1.5">
+                    {loginForm.formState.errors.email.message}
+                  </p>
                 )}
               </div>
 
               <div>
-                <div className="flex items-center justify-between mb-1.5">
+                <div className="mb-1.5 flex min-w-0 items-start justify-between gap-2">
                   <label className="text-sm font-600 text-foreground">Contraseña</label>
-                  <a href="#" className="text-xs text-primary hover:underline">
+                  <a
+                    href="#"
+                    className="shrink-0 text-right text-xs leading-5 text-primary hover:underline"
+                  >
                     ¿Olvidaste tu contraseña?
                   </a>
                 </div>
@@ -271,7 +303,9 @@ export default function AuthScreen() {
                   </button>
                 </div>
                 {loginForm.formState.errors.password && (
-                  <p className="text-xs text-danger mt-1.5">{loginForm.formState.errors.password.message}</p>
+                  <p className="text-xs text-danger mt-1.5">
+                    {loginForm.formState.errors.password.message}
+                  </p>
                 )}
               </div>
 
@@ -310,7 +344,10 @@ export default function AuthScreen() {
 
           {/* Register form */}
           {mode === 'register' && (
-            <form onSubmit={registerForm.handleSubmit(handleRegister)} className="flex flex-col gap-4">
+            <form
+              onSubmit={registerForm.handleSubmit(handleRegister)}
+              className="flex flex-col gap-4"
+            >
               <div>
                 <label className="block text-sm font-600 text-foreground mb-1.5">
                   Nombre completo
@@ -322,7 +359,9 @@ export default function AuthScreen() {
                   placeholder="Tu nombre"
                 />
                 {registerForm.formState.errors.name && (
-                  <p className="text-xs text-danger mt-1.5">{registerForm.formState.errors.name.message}</p>
+                  <p className="text-xs text-danger mt-1.5">
+                    {registerForm.formState.errors.name.message}
+                  </p>
                 )}
               </div>
 
@@ -340,7 +379,9 @@ export default function AuthScreen() {
                   placeholder="tu@email.com"
                 />
                 {registerForm.formState.errors.email && (
-                  <p className="text-xs text-danger mt-1.5">{registerForm.formState.errors.email.message}</p>
+                  <p className="text-xs text-danger mt-1.5">
+                    {registerForm.formState.errors.email.message}
+                  </p>
                 )}
               </div>
 
@@ -365,7 +406,9 @@ export default function AuthScreen() {
                   </button>
                 </div>
                 {registerForm.formState.errors.password && (
-                  <p className="text-xs text-danger mt-1.5">{registerForm.formState.errors.password.message}</p>
+                  <p className="text-xs text-danger mt-1.5">
+                    {registerForm.formState.errors.password.message}
+                  </p>
                 )}
               </div>
 
@@ -393,7 +436,9 @@ export default function AuthScreen() {
                   </button>
                 </div>
                 {registerForm.formState.errors.confirmPassword && (
-                  <p className="text-xs text-danger mt-1.5">{registerForm.formState.errors.confirmPassword.message}</p>
+                  <p className="text-xs text-danger mt-1.5">
+                    {registerForm.formState.errors.confirmPassword.message}
+                  </p>
                 )}
               </div>
 
@@ -405,15 +450,24 @@ export default function AuthScreen() {
                     {...registerForm.register('terms', { required: 'Debes aceptar los términos' })}
                     className="w-4 h-4 rounded border-border accent-primary mt-0.5"
                   />
-                  <label htmlFor="terms" className="text-sm text-muted-foreground cursor-pointer leading-relaxed">
+                  <label
+                    htmlFor="terms"
+                    className="text-sm text-muted-foreground cursor-pointer leading-relaxed"
+                  >
                     Acepto los{' '}
-                    <a href="#" className="text-primary hover:underline">Términos del programa</a>{' '}
+                    <a href="#" className="text-primary hover:underline">
+                      Términos del programa
+                    </a>{' '}
                     y la{' '}
-                    <a href="#" className="text-primary hover:underline">Política de privacidad</a>
+                    <a href="#" className="text-primary hover:underline">
+                      Política de privacidad
+                    </a>
                   </label>
                 </div>
                 {registerForm.formState.errors.terms && (
-                  <p className="text-xs text-danger mt-1.5">{registerForm.formState.errors.terms.message}</p>
+                  <p className="text-xs text-danger mt-1.5">
+                    {registerForm.formState.errors.terms.message}
+                  </p>
                 )}
               </div>
 

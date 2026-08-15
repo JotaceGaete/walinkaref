@@ -45,7 +45,12 @@ describe('AffiliateDashboardPage (integración)', () => {
     vi.clearAllMocks();
     getMyReferralStatsMock.mockResolvedValue(baseStats);
     listMyReferralsMock.mockResolvedValue([
-      { publicLabel: 'Usuario #91AE', createdAt: '2026-06-01T00:00:00Z', paidMonths: 2, qualified: true },
+      {
+        publicLabel: 'Usuario #91AE',
+        createdAt: '2026-06-01T00:00:00Z',
+        paidMonths: 2,
+        qualified: true,
+      },
     ]);
     listMyReferralPayoutsMock.mockResolvedValue([
       {
@@ -67,7 +72,9 @@ describe('AffiliateDashboardPage (integración)', () => {
   it('nunca renderiza las métricas mock de Rocket sin respaldo real (clics, tasa, gráficos)', async () => {
     render(<AffiliateDashboardPage />);
 
-    await waitFor(() => expect(screen.getByText('https://ref.walinka.com/juan-f92ee')).toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.getByText('https://ref.walinka.com/juan-f92ee')).toBeInTheDocument()
+    );
 
     expect(screen.queryByText(/clics totales/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/tasa de registro/i)).not.toBeInTheDocument();
@@ -86,7 +93,7 @@ describe('AffiliateDashboardPage (integración)', () => {
     // se acota al contenido principal para no ambigüar con el badge.
     const main = screen.getByRole('main');
     expect(await within(main).findByText('34')).toBeInTheDocument(); // invitedCount
-    expect(await within(main).findByText('Usuario #91AE')).toBeInTheDocument(); // de la lista
+    expect((await within(main).findAllByText('Usuario #91AE')).length).toBeGreaterThan(0); // tabla desktop + cards mobile
     expect(document.getElementById('mi-enlace')).toBeInTheDocument();
     expect(document.getElementById('referidos')).toBeInTheDocument();
   });
@@ -128,9 +135,11 @@ describe('AffiliateDashboardPage (integración)', () => {
   it('carga el historial de retiros real (wa_list_my_referral_payouts) y lo muestra', async () => {
     render(<AffiliateDashboardPage />);
 
-    await waitFor(() => expect(listMyReferralPayoutsMock).toHaveBeenCalledWith({ limit: 20, offset: 0 }));
-    expect(await screen.findByText('••••••7890', { exact: false })).toBeInTheDocument();
-    expect(screen.getByText('Solicitado')).toBeInTheDocument();
+    await waitFor(() =>
+      expect(listMyReferralPayoutsMock).toHaveBeenCalledWith({ limit: 20, offset: 0 })
+    );
+    expect((await screen.findAllByText('••••••7890', { exact: false })).length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Solicitado').length).toBeGreaterThan(0);
   });
 
   it('una solicitud de retiro exitosa refresca tanto stats como el historial de retiros', async () => {
@@ -140,10 +149,14 @@ describe('AffiliateDashboardPage (integración)', () => {
     await waitFor(() => expect(listMyReferralPayoutsMock).toHaveBeenCalledTimes(1));
 
     fireEvent.change(screen.getByLabelText('País'), { target: { value: 'CL' } });
-    fireEvent.change(screen.getByLabelText('Nombre del titular'), { target: { value: 'Juan Perez' } });
+    fireEvent.change(screen.getByLabelText('Nombre del titular'), {
+      target: { value: 'Juan Perez' },
+    });
     fireEvent.change(screen.getByLabelText('Banco'), { target: { value: 'Banco Estado' } });
     fireEvent.change(screen.getByLabelText('Tipo de cuenta'), { target: { value: 'checking' } });
-    fireEvent.change(screen.getByLabelText('Número de cuenta'), { target: { value: '1234567890' } });
+    fireEvent.change(screen.getByLabelText('Número de cuenta'), {
+      target: { value: '1234567890' },
+    });
 
     requestReferralPayoutMock.mockResolvedValue({
       requested: true,

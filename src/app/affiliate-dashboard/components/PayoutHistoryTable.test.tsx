@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import PayoutHistoryTable from './PayoutHistoryTable';
 import type { ReferralPayout } from '@/services/referralService';
 
@@ -47,34 +47,73 @@ const rejected: ReferralPayout = {
 
 describe('PayoutHistoryTable', () => {
   it('muestra un retiro requested con la etiqueta "Solicitado"', () => {
-    render(<PayoutHistoryTable payouts={[requested]} loading={false} error={false} onRetry={vi.fn()} />);
+    render(
+      <PayoutHistoryTable payouts={[requested]} loading={false} error={false} onRetry={vi.fn()} />
+    );
 
-    expect(screen.getByText('Solicitado')).toBeInTheDocument();
-    expect(screen.getByText('USD 10.00')).toBeInTheDocument();
+    const table = screen.getByRole('table');
+    expect(within(table).getByText('Solicitado')).toBeInTheDocument();
+    expect(within(table).getByText('USD 10.00')).toBeInTheDocument();
   });
 
   it('muestra un retiro paid con la etiqueta "Pagado" y su externalReference', () => {
     render(<PayoutHistoryTable payouts={[paid]} loading={false} error={false} onRetry={vi.fn()} />);
 
-    expect(screen.getByText('Pagado')).toBeInTheDocument();
-    expect(screen.getByText(/TXN-99/)).toBeInTheDocument();
+    const table = screen.getByRole('table');
+    expect(within(table).getByText('Pagado')).toBeInTheDocument();
+    expect(within(table).getByText(/TXN-99/)).toBeInTheDocument();
   });
 
   it('muestra un retiro rejected con la etiqueta "Rechazado" y su rejectedReason', () => {
-    render(<PayoutHistoryTable payouts={[rejected]} loading={false} error={false} onRetry={vi.fn()} />);
+    render(
+      <PayoutHistoryTable payouts={[rejected]} loading={false} error={false} onRetry={vi.fn()} />
+    );
 
-    expect(screen.getByText('Rechazado')).toBeInTheDocument();
-    expect(screen.getByText('Datos bancarios inválidos')).toBeInTheDocument();
+    const table = screen.getByRole('table');
+    expect(within(table).getByText('Rechazado')).toBeInTheDocument();
+    expect(within(table).getByText('Datos bancarios inválidos')).toBeInTheDocument();
   });
 
   it('muestra el número de cuenta enmascarado, nunca el completo', () => {
-    render(<PayoutHistoryTable payouts={[requested]} loading={false} error={false} onRetry={vi.fn()} />);
+    render(
+      <PayoutHistoryTable payouts={[requested]} loading={false} error={false} onRetry={vi.fn()} />
+    );
 
-    expect(screen.getByText(/••••••7890/)).toBeInTheDocument();
+    expect(within(screen.getByRole('table')).getByText(/••••••7890/)).toBeInTheDocument();
+  });
+
+  it('conserva tabla desktop y cards mobile con monto, estado, masking y detalles condicionales', () => {
+    render(
+      <PayoutHistoryTable
+        payouts={[requested, paid, rejected]}
+        loading={false}
+        error={false}
+        onRetry={vi.fn()}
+      />
+    );
+
+    const desktop = screen.getByRole('table');
+    const mobile = screen.getByRole('list', { name: /retiros en vista móvil/i });
+
+    expect(desktop).toBeInTheDocument();
+    expect(mobile).toBeInTheDocument();
+    expect(within(mobile).getByText('USD 10.00')).toBeInTheDocument();
+    expect(within(mobile).getByText('Solicitado')).toBeInTheDocument();
+    expect(within(mobile).getByText(/••••••7890/)).toBeInTheDocument();
+    expect(within(mobile).getByText('TXN-99')).toBeInTheDocument();
+    expect(within(mobile).getByText('Datos bancarios inválidos')).toBeInTheDocument();
+    expect(within(desktop).getByText(/••••••7890/)).toBeInTheDocument();
   });
 
   it('nunca renderiza holder_tax_id ni ningún dato bancario sin enmascarar (el tipo ReferralPayout no lo expone)', () => {
-    render(<PayoutHistoryTable payouts={[requested, paid, rejected]} loading={false} error={false} onRetry={vi.fn()} />);
+    render(
+      <PayoutHistoryTable
+        payouts={[requested, paid, rejected]}
+        loading={false}
+        error={false}
+        onRetry={vi.fn()}
+      />
+    );
 
     // El tipo ReferralPayout no tiene campo holder_tax_id/account_number:
     // esta prueba documenta que el HTML resultante nunca contiene un número
@@ -86,7 +125,7 @@ describe('PayoutHistoryTable', () => {
   it('estado vacío: sin retiros muestra el mensaje correspondiente', () => {
     render(<PayoutHistoryTable payouts={[]} loading={false} error={false} onRetry={vi.fn()} />);
 
-    expect(screen.getByText(/todavía no solicitaste ningún retiro/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/todavía no solicitaste ningún retiro/i).length).toBeGreaterThan(0);
   });
 
   it('loading: muestra el estado de carga', () => {
