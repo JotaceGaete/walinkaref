@@ -41,6 +41,16 @@ describe('ReferralLinkWidget', () => {
     expect(screen.getByText(/copiado/i)).toBeInTheDocument();
   });
 
+  it('no muestra QR y Compartir usa el fallback de portapapeles', async () => {
+    render(<ReferralLinkWidget stats={baseStats} loading={false} error={false} onRetry={vi.fn()} />);
+
+    expect(screen.queryByRole('button', { name: 'QR' })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Compartir' }));
+
+    expect(navigator.clipboard.writeText).toHaveBeenCalledWith('https://ref.walinka.com/juan-f92ee');
+    expect(await screen.findByRole('button', { name: 'Compartido' })).toBeInTheDocument();
+  });
+
   it('en error muestra el mensaje y el botón Reintentar, que llama a onRetry', () => {
     const onRetry = vi.fn();
     render(<ReferralLinkWidget stats={null} loading={false} error onRetry={onRetry} />);

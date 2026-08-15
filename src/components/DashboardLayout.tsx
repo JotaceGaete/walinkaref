@@ -3,16 +3,15 @@ import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import AppLogo from '@/components/ui/AppLogo';
-import { LayoutDashboard, Users, Link2, BookOpen, ChevronLeft, ChevronRight, LogOut, Bell, Settings, Menu,  } from 'lucide-react';
+import { LayoutDashboard, Users, Link2, ChevronLeft, ChevronRight, LogOut, Menu } from 'lucide-react';
 import Icon from '@/components/ui/AppIcon';
 import { useAuth } from '@/contexts/AuthContext';
 
 
 const sidebarLinks = [
-  { label: 'Dashboard', href: '/affiliate-dashboard', icon: LayoutDashboard, badgeKey: null },
-  { label: 'Referidos', href: '/affiliate-dashboard', icon: Users, badgeKey: 'referrals' },
-  { label: 'Mi enlace', href: '/affiliate-dashboard', icon: Link2, badgeKey: null },
-  { label: 'Recursos', href: '/affiliate-resources', icon: BookOpen, badgeKey: null },
+  { label: 'Dashboard', href: '/affiliate-dashboard', hash: '', icon: LayoutDashboard, badgeKey: null },
+  { label: 'Referidos', href: '/affiliate-dashboard#referidos', hash: '#referidos', icon: Users, badgeKey: 'referrals' },
+  { label: 'Mi enlace', href: '/affiliate-dashboard#mi-enlace', hash: '#mi-enlace', icon: Link2, badgeKey: null },
 ] as const;
 
 interface DashboardLayoutProps {
@@ -31,6 +30,7 @@ interface DashboardLayoutProps {
 export default function DashboardLayout({ children, referralsCount }: DashboardLayoutProps) {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [activeHash, setActiveHash] = useState('');
   const pathname = usePathname();
   const router = useRouter();
   const { user, loading, signOut } = useAuth();
@@ -40,6 +40,13 @@ export default function DashboardLayout({ children, referralsCount }: DashboardL
       router.replace('/sign-up-login-screen');
     }
   }, [loading, user, router]);
+
+  useEffect(() => {
+    const syncHash = () => setActiveHash(window.location.hash);
+    syncHash();
+    window.addEventListener('hashchange', syncHash);
+    return () => window.removeEventListener('hashchange', syncHash);
+  }, [pathname]);
 
   const handleLogout = async () => {
     await signOut();
@@ -98,7 +105,7 @@ export default function DashboardLayout({ children, referralsCount }: DashboardL
             </p>
           )}
           {sidebarLinks.map((link) => {
-            const isActive = pathname === link.href;
+            const isActive = pathname === '/affiliate-dashboard' && activeHash === link.hash;
             const Icon = link.icon;
             const badge = link.badgeKey === 'referrals' ? referralsCount : null;
             const hasBadge = badge !== null && badge !== undefined;
@@ -106,6 +113,11 @@ export default function DashboardLayout({ children, referralsCount }: DashboardL
               <Link
                 key={`sidebar-${link.label}`}
                 href={link.href}
+                aria-current={isActive ? 'page' : undefined}
+                onClick={() => {
+                  setActiveHash(link.hash);
+                  setMobileOpen(false);
+                }}
                 className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 relative group ${
                   isActive ? 'sidebar-link-active' : 'sidebar-link'
                 }`}
@@ -133,13 +145,6 @@ export default function DashboardLayout({ children, referralsCount }: DashboardL
 
         {/* Bottom */}
         <div className="px-3 py-4 border-t border-border flex flex-col gap-1">
-          <button
-            className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium sidebar-link w-full ${collapsed ? 'justify-center' : ''}`}
-            title={collapsed ? 'Configuración' : undefined}
-          >
-            <Settings size={18} className="shrink-0" />
-            {!collapsed && <span>Configuración</span>}
-          </button>
           <button
             type="button"
             onClick={handleLogout}
@@ -170,19 +175,16 @@ export default function DashboardLayout({ children, referralsCount }: DashboardL
         {/* Topbar */}
         <header className="h-16 bg-card border-b border-border flex items-center justify-between px-6 shrink-0">
           <button
+            type="button"
             className="lg:hidden p-2 rounded-lg hover:bg-muted transition-colors"
             onClick={() => setMobileOpen(true)}
+            aria-label="Abrir menú"
+            aria-expanded={mobileOpen}
           >
             <Menu size={20} className="text-foreground" />
           </button>
           <div className="flex-1" />
           <div className="flex items-center gap-3">
-            {/* Sin punto de notificación: no existe ningún sistema de
-                notificaciones real detrás todavía — mostrar un indicador
-                fijo implicaría que siempre hay algo nuevo, lo cual sería falso. */}
-            <button className="relative p-2 rounded-lg hover:bg-muted transition-colors">
-              <Bell size={18} className="text-muted-foreground" />
-            </button>
             <div className="flex items-center gap-2.5 pl-3 border-l border-border">
               <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground text-sm font-bold">
                 {initial}
