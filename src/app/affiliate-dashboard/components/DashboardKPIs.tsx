@@ -163,10 +163,12 @@ export default function DashboardKPIs({ stats, loading, error, onRetry }: Dashbo
                       {kpi.value}
                     </p>
                   )}
-                  <p className="text-xs font-500 text-muted-foreground">{kpi.label}</p>
+                  <p className="text-sm font-500 text-muted-foreground sm:text-xs">{kpi.label}</p>
                 </div>
                 {!loading && kpi.subtext && (
-                  <p className="text-xs font-600 text-muted-foreground">{kpi.subtext}</p>
+                  <p className="text-[13px] font-600 leading-relaxed text-muted-foreground sm:text-xs">
+                    {kpi.subtext}
+                  </p>
                 )}
               </div>
             );

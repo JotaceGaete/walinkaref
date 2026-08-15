@@ -73,79 +73,148 @@ export default function PayoutHistoryTable({
           </button>
         </div>
       ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[620px]">
-            <thead>
-              <tr className="border-b border-border bg-muted/40">
-                <th className="text-left px-5 py-3 text-xs font-600 text-muted-foreground uppercase tracking-wider">
-                  Fecha
-                </th>
-                <th className="text-left px-5 py-3 text-xs font-600 text-muted-foreground uppercase tracking-wider">
-                  Monto
-                </th>
-                <th className="text-left px-5 py-3 text-xs font-600 text-muted-foreground uppercase tracking-wider">
-                  Método
-                </th>
-                <th className="text-left px-5 py-3 text-xs font-600 text-muted-foreground uppercase tracking-wider">
-                  Estado
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border">
-              {loading ? (
-                Array.from({ length: 3 }, (_, i) => (
-                  <tr key={`skeleton-${i}`}>
-                    <td className="px-5 py-3.5" colSpan={4}>
-                      <div className="h-4 w-full max-w-xs rounded bg-muted animate-pulse" />
-                    </td>
-                  </tr>
-                ))
-              ) : payouts.length === 0 ? (
-                <tr>
-                  <td colSpan={4} className="text-center py-12 text-sm text-muted-foreground">
-                    Todavía no solicitaste ningún retiro.
-                  </td>
-                </tr>
-              ) : (
-                payouts.map((p) => (
-                  <tr key={p.payoutId} className="hover:bg-muted/40 transition-colors">
-                    <td className="px-5 py-3.5">
-                      <span className="text-sm text-muted-foreground">
-                        {formatDate(p.requestedAt)}
-                      </span>
-                    </td>
-                    <td className="px-5 py-3.5">
-                      <span className="text-sm font-700 text-foreground font-tabular">
-                        {formatMoney(p.requestedAmount, p.currency)}
-                      </span>
-                    </td>
-                    <td className="px-5 py-3.5">
-                      <span className="text-sm text-muted-foreground">
-                        {p.payoutMethod
-                          ? (PAYOUT_METHOD_LABELS[p.payoutMethod] ?? p.payoutMethod)
-                          : '—'}
-                        {p.maskedAccountNumber ? ` · ${p.maskedAccountNumber}` : ''}
-                      </span>
-                    </td>
-                    <td className="px-5 py-3.5">
-                      <span className={STATUS_BADGE_CLASS[p.status]}>
-                        {STATUS_LABELS[p.status]}
-                      </span>
-                      {p.status === 'paid' && p.externalReference && (
-                        <p className="text-xs text-muted-foreground mt-1">
-                          Ref: {p.externalReference}
+        <>
+          <div className="md:hidden">
+            {loading ? (
+              <div aria-label="Cargando retiros" className="space-y-3 p-4">
+                {Array.from({ length: 3 }, (_, i) => (
+                  <div
+                    key={`mobile-skeleton-${i}`}
+                    className="h-32 animate-pulse rounded-2xl bg-muted"
+                  />
+                ))}
+              </div>
+            ) : payouts.length === 0 ? (
+              <p className="px-5 py-12 text-center text-sm text-muted-foreground">
+                Todavía no solicitaste ningún retiro.
+              </p>
+            ) : (
+              <ul aria-label="Retiros en vista móvil" className="divide-y divide-border">
+                {payouts.map((payout) => (
+                  <li key={`mobile-${payout.payoutId}`} className="p-4">
+                    <article className="rounded-2xl border border-border bg-background p-4">
+                      <div className="flex items-start justify-between gap-3">
+                        <p className="text-lg font-800 text-foreground font-tabular">
+                          {formatMoney(payout.requestedAmount, payout.currency)}
                         </p>
-                      )}
-                      {p.status === 'rejected' && p.rejectedReason && (
-                        <p className="text-xs text-muted-foreground mt-1">{p.rejectedReason}</p>
-                      )}
+                        <span className={STATUS_BADGE_CLASS[payout.status]}>
+                          {STATUS_LABELS[payout.status]}
+                        </span>
+                      </div>
+                      <dl className="mt-4 grid gap-3 text-sm">
+                        <div className="flex items-start justify-between gap-4">
+                          <dt className="text-muted-foreground">Fecha</dt>
+                          <dd className="text-right font-600 text-foreground">
+                            {formatDate(payout.requestedAt)}
+                          </dd>
+                        </div>
+                        <div className="flex items-start justify-between gap-4">
+                          <dt className="text-muted-foreground">Método</dt>
+                          <dd className="text-right font-600 text-foreground">
+                            {payout.payoutMethod
+                              ? (PAYOUT_METHOD_LABELS[payout.payoutMethod] ?? payout.payoutMethod)
+                              : '—'}
+                            {payout.maskedAccountNumber ? ` · ${payout.maskedAccountNumber}` : ''}
+                          </dd>
+                        </div>
+                        {payout.status === 'paid' && payout.externalReference && (
+                          <div className="flex items-start justify-between gap-4">
+                            <dt className="text-muted-foreground">Referencia</dt>
+                            <dd className="break-all text-right font-600 text-foreground">
+                              {payout.externalReference}
+                            </dd>
+                          </div>
+                        )}
+                        {payout.status === 'rejected' && payout.rejectedReason && (
+                          <div className="flex items-start justify-between gap-4">
+                            <dt className="text-muted-foreground">Motivo</dt>
+                            <dd className="text-right font-600 text-danger">
+                              {payout.rejectedReason}
+                            </dd>
+                          </div>
+                        )}
+                      </dl>
+                    </article>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+
+          <div className="hidden overflow-x-auto md:block">
+            <table className="w-full min-w-[620px]">
+              <thead>
+                <tr className="border-b border-border bg-muted/40">
+                  <th className="text-left px-5 py-3 text-xs font-600 text-muted-foreground uppercase tracking-wider">
+                    Fecha
+                  </th>
+                  <th className="text-left px-5 py-3 text-xs font-600 text-muted-foreground uppercase tracking-wider">
+                    Monto
+                  </th>
+                  <th className="text-left px-5 py-3 text-xs font-600 text-muted-foreground uppercase tracking-wider">
+                    Método
+                  </th>
+                  <th className="text-left px-5 py-3 text-xs font-600 text-muted-foreground uppercase tracking-wider">
+                    Estado
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {loading ? (
+                  Array.from({ length: 3 }, (_, i) => (
+                    <tr key={`skeleton-${i}`}>
+                      <td className="px-5 py-3.5" colSpan={4}>
+                        <div className="h-4 w-full max-w-xs rounded bg-muted animate-pulse" />
+                      </td>
+                    </tr>
+                  ))
+                ) : payouts.length === 0 ? (
+                  <tr>
+                    <td colSpan={4} className="text-center py-12 text-sm text-muted-foreground">
+                      Todavía no solicitaste ningún retiro.
                     </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+                ) : (
+                  payouts.map((p) => (
+                    <tr key={p.payoutId} className="hover:bg-muted/40 transition-colors">
+                      <td className="px-5 py-3.5">
+                        <span className="text-sm text-muted-foreground">
+                          {formatDate(p.requestedAt)}
+                        </span>
+                      </td>
+                      <td className="px-5 py-3.5">
+                        <span className="text-sm font-700 text-foreground font-tabular">
+                          {formatMoney(p.requestedAmount, p.currency)}
+                        </span>
+                      </td>
+                      <td className="px-5 py-3.5">
+                        <span className="text-sm text-muted-foreground">
+                          {p.payoutMethod
+                            ? (PAYOUT_METHOD_LABELS[p.payoutMethod] ?? p.payoutMethod)
+                            : '—'}
+                          {p.maskedAccountNumber ? ` · ${p.maskedAccountNumber}` : ''}
+                        </span>
+                      </td>
+                      <td className="px-5 py-3.5">
+                        <span className={STATUS_BADGE_CLASS[p.status]}>
+                          {STATUS_LABELS[p.status]}
+                        </span>
+                        {p.status === 'paid' && p.externalReference && (
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Ref: {p.externalReference}
+                          </p>
+                        )}
+                        {p.status === 'rejected' && p.rejectedReason && (
+                          <p className="text-xs text-muted-foreground mt-1">{p.rejectedReason}</p>
+                        )}
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </>
       )}
     </div>
   );

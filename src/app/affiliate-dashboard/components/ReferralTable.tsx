@@ -155,8 +155,78 @@ export default function ReferralTable({
         </div>
       ) : (
         <>
+          {/* Mobile cards: misma colección paginada, helpers y estados que la tabla. */}
+          <div className="md:hidden">
+            {loading ? (
+              <div aria-label="Cargando referidos" className="space-y-3 p-4">
+                {Array.from({ length: 3 }, (_, i) => (
+                  <div
+                    key={`mobile-skeleton-${i}`}
+                    className="h-28 animate-pulse rounded-2xl bg-muted"
+                  />
+                ))}
+              </div>
+            ) : referrals.length === 0 ? (
+              <p className="px-5 py-12 text-center text-sm text-muted-foreground">
+                Todavía no tienes referidos. Comparte tu enlace para empezar.
+              </p>
+            ) : paginated.length === 0 ? (
+              <p className="px-5 py-12 text-center text-sm text-muted-foreground">
+                No hay referidos que coincidan con tu búsqueda
+              </p>
+            ) : (
+              <ul aria-label="Referidos en vista móvil" className="divide-y divide-border">
+                {paginated.map((referral, index) => {
+                  const status = deriveStatus(referral);
+                  const config = statusConfig[status];
+                  const progress = Math.min(100, (referral.paidMonths / requiredPaidMonths) * 100);
+                  return (
+                    <li key={`mobile-${referral.publicLabel}-${index}`} className="p-4 sm:p-5">
+                      <article className="rounded-2xl border border-border bg-background p-4">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <h3 className="truncate text-sm font-700 text-foreground font-tabular">
+                              {referral.publicLabel}
+                            </h3>
+                            <p className="mt-1 text-xs text-muted-foreground">
+                              Se unió {formatDate(referral.createdAt)}
+                            </p>
+                          </div>
+                          <span className={`badge shrink-0 ${config.className}`}>
+                            {config.label}
+                          </span>
+                        </div>
+                        <div
+                          className="mt-4"
+                          aria-label={`Progreso ${referral.paidMonths} de ${requiredPaidMonths} meses`}
+                        >
+                          <div className="mb-2 flex items-center justify-between gap-3">
+                            <span className="text-xs font-600 text-muted-foreground">Progreso</span>
+                            <span className="text-sm font-700 text-foreground font-tabular">
+                              {referral.paidMonths}/{requiredPaidMonths} meses
+                            </span>
+                          </div>
+                          <div className="progress-track h-2.5 overflow-hidden rounded-full bg-muted">
+                            <div
+                              className={
+                                status === 'qualified'
+                                  ? 'progress-fill-green'
+                                  : 'progress-fill-blue'
+                              }
+                              style={{ width: `${progress}%` }}
+                            />
+                          </div>
+                        </div>
+                      </article>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </div>
+
           {/* Table */}
-          <div className="overflow-x-auto">
+          <div className="hidden overflow-x-auto md:block">
             <table className="w-full min-w-[680px]">
               <thead>
                 <tr className="border-b border-border bg-muted/40">
