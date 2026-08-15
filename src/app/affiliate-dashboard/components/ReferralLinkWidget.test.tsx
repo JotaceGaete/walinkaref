@@ -14,6 +14,7 @@ const baseStats: ReferralStats = {
   pendingAmount: 0,
   availableAmount: 30,
   totalEarnedAmount: 55,
+  pendingPayoutsByCurrency: [],
 };
 
 describe('ReferralLinkWidget', () => {

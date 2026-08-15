@@ -14,6 +14,7 @@ const baseStats: ReferralStats = {
   pendingAmount: 12.5,
   availableAmount: 30,
   totalEarnedAmount: 55,
+  pendingPayoutsByCurrency: [],
 };
 
 describe('DashboardKPIs', () => {
@@ -49,5 +50,41 @@ describe('DashboardKPIs', () => {
     expect(screen.getByText(/no pudimos cargar tus métricas/i)).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: /reintentar/i }));
     expect(onRetry).toHaveBeenCalledTimes(1);
+  });
+
+  it('sin retiros solicitados (pendingPayoutsByCurrency=[]), no muestra la sección "Retiros solicitados"', () => {
+    render(<DashboardKPIs stats={baseStats} loading={false} error={false} onRetry={vi.fn()} />);
+
+    expect(screen.queryByText('Retiros solicitados')).not.toBeInTheDocument();
+  });
+
+  it('con pendingPayoutsByCurrency en 2 monedas, muestra ambas por separado y NUNCA un total combinado', () => {
+    const statsWithPending: ReferralStats = {
+      ...baseStats,
+      pendingPayoutsByCurrency: [
+        { currency: 'CLP', amount: 5000 },
+        { currency: 'USD', amount: 10 },
+      ],
+    };
+    render(<DashboardKPIs stats={statsWithPending} loading={false} error={false} onRetry={vi.fn()} />);
+
+    expect(screen.getByText('Retiros solicitados')).toBeInTheDocument();
+    expect(screen.getByText('CLP 5000.00')).toBeInTheDocument();
+    expect(screen.getByText('USD 10.00')).toBeInTheDocument();
+
+    // Nunca debe aparecer una suma cruzada (5000 + 10 = 5010) en ningún formato plausible.
+    expect(screen.queryByText(/5010/)).not.toBeInTheDocument();
+    expect(screen.queryByText('CLP 5010.00')).not.toBeInTheDocument();
+    expect(screen.queryByText('USD 5010.00')).not.toBeInTheDocument();
+  });
+
+  it('con una sola moneda pendiente, muestra un único valor', () => {
+    const statsWithPending: ReferralStats = {
+      ...baseStats,
+      pendingPayoutsByCurrency: [{ currency: 'USD', amount: 25 }],
+    };
+    render(<DashboardKPIs stats={statsWithPending} loading={false} error={false} onRetry={vi.fn()} />);
+
+    expect(screen.getByText('USD 25.00')).toBeInTheDocument();
   });
 });
