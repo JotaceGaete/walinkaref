@@ -1,6 +1,13 @@
 'use client';
 import React, { useState } from 'react';
-import { Search, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, AlertTriangle } from 'lucide-react';
+import {
+  Search,
+  ChevronUp,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  AlertTriangle,
+} from 'lucide-react';
 import type { ReferralListItem } from '@/services/referralService';
 
 type DerivedStatus = 'qualified' | 'progress' | 'new';
@@ -82,34 +89,44 @@ export default function ReferralTable({
   };
 
   return (
-    <div className="bg-card shadow-card rounded-2xl border border-border overflow-hidden">
+    <div className="overflow-hidden rounded-3xl border border-border bg-card shadow-card">
       {/* Table header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-5 border-b border-border">
+      <div className="flex flex-col justify-between gap-4 border-b border-border p-5 sm:p-6 lg:flex-row lg:items-center">
         <div>
-          <h3 className="text-base font-700 text-foreground">Mis referidos</h3>
+          <p className="text-xs font-700 uppercase tracking-[0.16em] text-primary">Comunidad</p>
+          <h2 className="mt-1 text-xl font-800 tracking-tight text-foreground">Mis referidos</h2>
           <p className="text-xs text-muted-foreground mt-0.5">
             {loading ? 'Cargando…' : `${filtered.length} referidos totales`}
           </p>
         </div>
         {!error && (
-          <div className="flex items-center gap-2">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
             {/* Search */}
-            <div className="relative">
-              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+            <div className="relative w-full sm:w-auto">
+              <Search
+                size={14}
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+              />
               <input
                 type="text"
                 value={search}
-                onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+                onChange={(e) => {
+                  setSearch(e.target.value);
+                  setPage(1);
+                }}
                 placeholder="Buscar usuario..."
-                className="pl-8 pr-3 py-2 text-xs bg-background border border-border rounded-xl w-36 outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 transition-all"
+                className="w-full rounded-xl border border-border bg-background py-2.5 pl-9 pr-3 text-xs outline-none transition-all focus:border-primary focus:ring-1 focus:ring-primary/20 sm:w-44"
               />
             </div>
             {/* Status filter */}
-            <div className="flex items-center gap-1 bg-muted rounded-xl p-1">
+            <div className="flex max-w-full items-center gap-1 overflow-x-auto rounded-xl bg-muted p-1">
               {(['all', 'qualified', 'progress', 'new'] as const).map((s) => (
                 <button
                   key={`filter-${s}`}
-                  onClick={() => { setStatusFilter(s); setPage(1); }}
+                  onClick={() => {
+                    setStatusFilter(s);
+                    setPage(1);
+                  }}
                   className={`px-3 py-1.5 text-xs font-600 rounded-lg transition-all ${
                     statusFilter === s
                       ? 'bg-card shadow-sm text-foreground'
@@ -140,7 +157,7 @@ export default function ReferralTable({
         <>
           {/* Table */}
           <div className="overflow-x-auto">
-            <table className="w-full">
+            <table className="w-full min-w-[680px]">
               <thead>
                 <tr className="border-b border-border bg-muted/40">
                   <th className="text-left px-5 py-3 text-xs font-600 text-muted-foreground uppercase tracking-wider">
@@ -214,9 +231,13 @@ export default function ReferralTable({
                         </td>
                         <td className="px-5 py-3.5">
                           <div className="flex items-center gap-3">
-                            <div className="progress-track w-20 h-1.5">
+                            <div className="progress-track h-2 w-24 overflow-hidden rounded-full bg-muted">
                               <div
-                                className={status === 'qualified' ? 'progress-fill-green' : 'progress-fill-blue'}
+                                className={
+                                  status === 'qualified'
+                                    ? 'progress-fill-green'
+                                    : 'progress-fill-blue'
+                                }
                                 style={{
                                   width: `${Math.min(100, (r.paidMonths / requiredPaidMonths) * 100)}%`,
                                 }}

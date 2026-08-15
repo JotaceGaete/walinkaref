@@ -40,20 +40,30 @@ const PAYOUT_METHOD_LABELS: Record<string, string> = {
   bank_transfer: 'Transferencia bancaria',
 };
 
-export default function PayoutHistoryTable({ payouts, loading, error, onRetry }: PayoutHistoryTableProps) {
+export default function PayoutHistoryTable({
+  payouts,
+  loading,
+  error,
+  onRetry,
+}: PayoutHistoryTableProps) {
   return (
-    <div className="bg-card shadow-card rounded-2xl border border-border overflow-hidden">
-      <div className="p-5 border-b border-border">
-        <h3 className="text-base font-700 text-foreground">Mis retiros</h3>
+    <div className="overflow-hidden rounded-3xl border border-border bg-card shadow-card">
+      <div className="border-b border-border p-5 sm:p-6">
+        <p className="text-xs font-700 uppercase tracking-[0.16em] text-primary">Historial</p>
+        <h3 className="mt-1 text-lg font-800 tracking-tight text-foreground">Mis retiros</h3>
         <p className="text-xs text-muted-foreground mt-0.5">
-          {loading ? 'Cargando…' : `${payouts.length} retiro${payouts.length === 1 ? '' : 's'} solicitados`}
+          {loading
+            ? 'Cargando…'
+            : `${payouts.length} retiro${payouts.length === 1 ? '' : 's'} solicitados`}
         </p>
       </div>
 
       {error ? (
         <div className="flex items-center gap-3 p-6">
           <AlertTriangle size={16} className="text-muted-foreground shrink-0" />
-          <p className="flex-1 text-sm text-muted-foreground">No pudimos cargar tu historial de retiros.</p>
+          <p className="flex-1 text-sm text-muted-foreground">
+            No pudimos cargar tu historial de retiros.
+          </p>
           <button
             type="button"
             onClick={onRetry}
@@ -64,7 +74,7 @@ export default function PayoutHistoryTable({ payouts, loading, error, onRetry }:
         </div>
       ) : (
         <div className="overflow-x-auto">
-          <table className="w-full">
+          <table className="w-full min-w-[620px]">
             <thead>
               <tr className="border-b border-border bg-muted/40">
                 <th className="text-left px-5 py-3 text-xs font-600 text-muted-foreground uppercase tracking-wider">
@@ -100,7 +110,9 @@ export default function PayoutHistoryTable({ payouts, loading, error, onRetry }:
                 payouts.map((p) => (
                   <tr key={p.payoutId} className="hover:bg-muted/40 transition-colors">
                     <td className="px-5 py-3.5">
-                      <span className="text-sm text-muted-foreground">{formatDate(p.requestedAt)}</span>
+                      <span className="text-sm text-muted-foreground">
+                        {formatDate(p.requestedAt)}
+                      </span>
                     </td>
                     <td className="px-5 py-3.5">
                       <span className="text-sm font-700 text-foreground font-tabular">
@@ -109,14 +121,20 @@ export default function PayoutHistoryTable({ payouts, loading, error, onRetry }:
                     </td>
                     <td className="px-5 py-3.5">
                       <span className="text-sm text-muted-foreground">
-                        {p.payoutMethod ? PAYOUT_METHOD_LABELS[p.payoutMethod] ?? p.payoutMethod : '—'}
+                        {p.payoutMethod
+                          ? (PAYOUT_METHOD_LABELS[p.payoutMethod] ?? p.payoutMethod)
+                          : '—'}
                         {p.maskedAccountNumber ? ` · ${p.maskedAccountNumber}` : ''}
                       </span>
                     </td>
                     <td className="px-5 py-3.5">
-                      <span className={STATUS_BADGE_CLASS[p.status]}>{STATUS_LABELS[p.status]}</span>
+                      <span className={STATUS_BADGE_CLASS[p.status]}>
+                        {STATUS_LABELS[p.status]}
+                      </span>
                       {p.status === 'paid' && p.externalReference && (
-                        <p className="text-xs text-muted-foreground mt-1">Ref: {p.externalReference}</p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Ref: {p.externalReference}
+                        </p>
                       )}
                       {p.status === 'rejected' && p.rejectedReason && (
                         <p className="text-xs text-muted-foreground mt-1">{p.rejectedReason}</p>

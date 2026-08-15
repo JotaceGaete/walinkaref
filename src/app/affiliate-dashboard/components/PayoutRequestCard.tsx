@@ -21,6 +21,8 @@ interface PayoutRequestFormData {
 interface PayoutRequestCardProps {
   /** availableAmount de wa_get_my_referral_stats() -- solo para habilitar/deshabilitar el botón, nunca para decidir qué se retira (eso lo resuelve la RPC). */
   availableAmount: number;
+  /** Moneda real asociada al saldo; se omite si stats todavía no cargó. */
+  availableCurrency?: string;
   /** Se llama tras un éxito real (al menos 1 payout creado) para refrescar stats + historial en el componente padre. */
   onSuccess: () => void;
 }
@@ -41,7 +43,11 @@ const DEFAULT_VALUES: PayoutRequestFormData = {
   email: '',
 };
 
-export default function PayoutRequestCard({ availableAmount, onSuccess }: PayoutRequestCardProps) {
+export default function PayoutRequestCard({
+  availableAmount,
+  availableCurrency,
+  onSuccess,
+}: PayoutRequestCardProps) {
   const [submitting, setSubmitting] = useState(false);
   const [feedback, setFeedback] = useState<FeedbackState>(null);
 
@@ -71,7 +77,10 @@ export default function PayoutRequestCard({ availableAmount, onSuccess }: Payout
     // Nunca mostrar éxito si no se creó ningún payout real.
     if (created.length === 0) {
       if (result.reason === 'nothing_to_withdraw') {
-        setFeedback({ type: 'info', message: 'No tienes comisiones disponibles para retirar en este momento.' });
+        setFeedback({
+          type: 'info',
+          message: 'No tienes comisiones disponibles para retirar en este momento.',
+        });
         return;
       }
       const belowMinimum = (result.payouts ?? []).find((p) => p.reason === 'below_minimum');
@@ -119,22 +128,39 @@ export default function PayoutRequestCard({ availableAmount, onSuccess }: Payout
       const result = await requestReferralPayout(snapshot);
       handleResult(result);
     } catch (err) {
-      console.warn('[PayoutRequestCard] requestReferralPayout failed:', (err as { message?: string })?.message);
-      setFeedback({ type: 'error', message: 'No pudimos conectar con el servidor. Intenta nuevamente.' });
+      console.warn(
+        '[PayoutRequestCard] requestReferralPayout failed:',
+        (err as { message?: string })?.message
+      );
+      setFeedback({
+        type: 'error',
+        message: 'No pudimos conectar con el servidor. Intenta nuevamente.',
+      });
     } finally {
       setSubmitting(false);
     }
   };
 
   return (
-    <div className="bg-card shadow-card rounded-2xl border border-border p-5 mb-6">
-      <div className="flex items-center gap-2 mb-4">
-        <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-accent/10">
-          <Landmark size={16} className="text-accent" />
+    <div className="rounded-3xl border border-border bg-card p-5 shadow-card sm:p-6">
+      <div className="mb-5 flex flex-col gap-4 border-b border-border pb-5 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-accent/10">
+            <Landmark size={16} className="text-accent" />
+          </div>
+          <div>
+            <h3 className="text-lg font-800 tracking-tight text-foreground">Solicitar retiro</h3>
+            <p className="text-xs text-muted-foreground">Transferencia bancaria</p>
+          </div>
         </div>
-        <div>
-          <h3 className="text-base font-700 text-foreground">Solicitar retiro</h3>
-          <p className="text-xs text-muted-foreground">Transferencia bancaria</p>
+        <div className="rounded-xl bg-positive/10 px-4 py-2 sm:text-right">
+          <p className="text-[11px] font-700 uppercase tracking-wider text-positive">
+            Saldo disponible
+          </p>
+          <p className="mt-0.5 text-base font-800 text-foreground font-tabular">
+            {availableCurrency ? `${availableCurrency} ` : ''}
+            {availableAmount.toFixed(2)}
+          </p>
         </div>
       </div>
 
@@ -159,7 +185,11 @@ export default function PayoutRequestCard({ availableAmount, onSuccess }: Payout
           )}
           <p
             className={`text-sm ${
-              feedback.type === 'success' ? 'text-positive' : feedback.type === 'error' ? 'text-danger' : 'text-pending'
+              feedback.type === 'success'
+                ? 'text-positive'
+                : feedback.type === 'error'
+                  ? 'text-danger'
+                  : 'text-pending'
             }`}
           >
             {feedback.message}
@@ -168,15 +198,20 @@ export default function PayoutRequestCard({ availableAmount, onSuccess }: Payout
       )}
 
       {!canRequest ? (
-        <p className="text-sm text-muted-foreground">
-          Todavía no tienes saldo disponible para retirar. Cuando un referido complete la condición del programa, vas a
-          poder solicitar tu retiro acá.
-        </p>
+        <div className="rounded-2xl bg-background p-5">
+          <p className="text-sm leading-relaxed text-muted-foreground">
+            Todavía no tienes saldo disponible para retirar. Cuando un referido complete la
+            condición del programa, vas a poder solicitar tu retiro acá.
+          </p>
+        </div>
       ) : (
         <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4" noValidate>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-600 text-foreground mb-1.5" htmlFor="payout-country">
+              <label
+                className="block text-sm font-600 text-foreground mb-1.5"
+                htmlFor="payout-country"
+              >
                 País
               </label>
               <input
@@ -186,11 +221,16 @@ export default function PayoutRequestCard({ availableAmount, onSuccess }: Payout
                 {...register('country', { required: 'El país es obligatorio' })}
                 className={`input-field ${errors.country ? 'input-field-error' : ''}`}
               />
-              {errors.country && <p className="text-xs text-danger mt-1.5">{errors.country.message}</p>}
+              {errors.country && (
+                <p className="text-xs text-danger mt-1.5">{errors.country.message}</p>
+              )}
             </div>
 
             <div>
-              <label className="block text-sm font-600 text-foreground mb-1.5" htmlFor="payout-holder-name">
+              <label
+                className="block text-sm font-600 text-foreground mb-1.5"
+                htmlFor="payout-holder-name"
+              >
                 Nombre del titular
               </label>
               <input
@@ -199,12 +239,18 @@ export default function PayoutRequestCard({ availableAmount, onSuccess }: Payout
                 {...register('holder_name', { required: 'El nombre del titular es obligatorio' })}
                 className={`input-field ${errors.holder_name ? 'input-field-error' : ''}`}
               />
-              {errors.holder_name && <p className="text-xs text-danger mt-1.5">{errors.holder_name.message}</p>}
+              {errors.holder_name && (
+                <p className="text-xs text-danger mt-1.5">{errors.holder_name.message}</p>
+              )}
             </div>
 
             <div>
-              <label className="block text-sm font-600 text-foreground mb-1.5" htmlFor="payout-holder-tax-id">
-                RUT / identificación tributaria <span className="text-muted-foreground font-400">(opcional)</span>
+              <label
+                className="block text-sm font-600 text-foreground mb-1.5"
+                htmlFor="payout-holder-tax-id"
+              >
+                RUT / identificación tributaria{' '}
+                <span className="text-muted-foreground font-400">(opcional)</span>
               </label>
               <input
                 id="payout-holder-tax-id"
@@ -215,7 +261,10 @@ export default function PayoutRequestCard({ availableAmount, onSuccess }: Payout
             </div>
 
             <div>
-              <label className="block text-sm font-600 text-foreground mb-1.5" htmlFor="payout-bank-name">
+              <label
+                className="block text-sm font-600 text-foreground mb-1.5"
+                htmlFor="payout-bank-name"
+              >
                 Banco
               </label>
               <input
@@ -224,11 +273,16 @@ export default function PayoutRequestCard({ availableAmount, onSuccess }: Payout
                 {...register('bank_name', { required: 'El banco es obligatorio' })}
                 className={`input-field ${errors.bank_name ? 'input-field-error' : ''}`}
               />
-              {errors.bank_name && <p className="text-xs text-danger mt-1.5">{errors.bank_name.message}</p>}
+              {errors.bank_name && (
+                <p className="text-xs text-danger mt-1.5">{errors.bank_name.message}</p>
+              )}
             </div>
 
             <div>
-              <label className="block text-sm font-600 text-foreground mb-1.5" htmlFor="payout-account-type">
+              <label
+                className="block text-sm font-600 text-foreground mb-1.5"
+                htmlFor="payout-account-type"
+              >
                 Tipo de cuenta
               </label>
               <select
@@ -244,11 +298,16 @@ export default function PayoutRequestCard({ availableAmount, onSuccess }: Payout
                 <option value="savings">Cuenta de ahorro</option>
                 <option value="vista">Cuenta vista / RUT</option>
               </select>
-              {errors.account_type && <p className="text-xs text-danger mt-1.5">{errors.account_type.message}</p>}
+              {errors.account_type && (
+                <p className="text-xs text-danger mt-1.5">{errors.account_type.message}</p>
+              )}
             </div>
 
             <div>
-              <label className="block text-sm font-600 text-foreground mb-1.5" htmlFor="payout-account-number">
+              <label
+                className="block text-sm font-600 text-foreground mb-1.5"
+                htmlFor="payout-account-number"
+              >
                 Número de cuenta
               </label>
               <input
@@ -258,11 +317,16 @@ export default function PayoutRequestCard({ availableAmount, onSuccess }: Payout
                 {...register('account_number', { required: 'El número de cuenta es obligatorio' })}
                 className={`input-field ${errors.account_number ? 'input-field-error' : ''}`}
               />
-              {errors.account_number && <p className="text-xs text-danger mt-1.5">{errors.account_number.message}</p>}
+              {errors.account_number && (
+                <p className="text-xs text-danger mt-1.5">{errors.account_number.message}</p>
+              )}
             </div>
 
             <div className="sm:col-span-2">
-              <label className="block text-sm font-600 text-foreground mb-1.5" htmlFor="payout-email">
+              <label
+                className="block text-sm font-600 text-foreground mb-1.5"
+                htmlFor="payout-email"
+              >
                 Email de contacto <span className="text-muted-foreground font-400">(opcional)</span>
               </label>
               <input
@@ -277,7 +341,7 @@ export default function PayoutRequestCard({ availableAmount, onSuccess }: Payout
           <button
             type="submit"
             disabled={submitting}
-            className="btn-primary py-3 text-sm flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed self-start px-6"
+            className="btn-primary mt-1 flex w-full items-center justify-center gap-2 py-3 text-sm disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto sm:self-start sm:px-7"
           >
             {submitting ? (
               <>
